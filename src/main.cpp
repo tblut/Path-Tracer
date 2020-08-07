@@ -1,7 +1,9 @@
 #include "VecMath.h"
+#include "stb_image_write.h"
 using namespace pt;
 
 #include <iostream>
+#include <vector>
 #include <cassert>
 
 bool isApproxEqual(float a, float b, float eps = 1.0e-8f) {
@@ -61,6 +63,9 @@ int main(int argc, char** argv) {
     std::cout << "cross((1,0,0),(0,0,-1))  " << isApproxEqual(cross(Vec3{ 1,0,0 }, Vec3{0,0,-1}), Vec3(0, 1, 0)) << '\n';
     std::cout << "reflect((1,-1,0),(0,1,0))  " << isApproxEqual(reflect(Vec3(1, -1, 0), Vec3(0, 1, 0)), Vec3(1, 1, 0)) << '\n';
     std::cout << "refract((1,-1,0),(0,1,0),1)  " << isApproxEqual(refract(Vec3(1, -1, 0), Vec3(0, 1, 0), 1.0f), Vec3(1, -1, 0)) << '\n';
-    
+
+    std::vector<uint32_t> pixels(256 * 128, 0xffff00ff);
+    stbi_write_png("test.png", 256, 128, 4, pixels.data(), 4);
+
     return 0;
 }
