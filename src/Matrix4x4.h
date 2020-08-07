@@ -59,14 +59,14 @@ struct Matrix4x4 {
     }
 
     union {
+        T data[4][4];
         Vector4<T> rows[4];
         struct {
             T _11, _12, _13, _14;
             T _21, _22, _23, _24;
             T _31, _32, _33, _34;
             T _41, _42, _43, _44;
-        };
-        T data[4][4];
+        }; 
     };
 };
 
@@ -128,14 +128,32 @@ constexpr Matrix4x4<T> transpose(const Matrix4x4<T>& a) {
 }
 
 template <typename T>
-constexpr Matrix4x4<T> lookAt(const Vector3<T>& eye, const Vector3<T>& at, const Vector3<T>& up) {
-    const Vector3<T> z = normalize(at - eye);
-    const Vector3<T> x = cross(z, normalize(up));
-    const Vector3<T> y = cross(x, z);
+constexpr Vector3<T> transformPoint3x4(const Matrix4x4<T>& m, const Vector3<T>& p) {
     return {
-        x.x, y.x, -z.x, -dot(x, eye),
-        x.y, y.y, -z.y, -dot(y, eye),
-        x.z, y.z, -z.z, -dot(z, eye),
+        m._11 * p.x + m._12 * p.y + m._13 * p.z + m._14,
+        m._21 * p.x + m._22 * p.y + m._23 * p.z + m._24,
+        m._31 * p.x + m._32 * p.y + m._33 * p.z + m._34
+    };
+}
+
+template <typename T>
+constexpr Vector3<T> transformVector3x4(const Matrix4x4<T>& m, const Vector3<T>& v) {
+    return {
+        m._11 * v.x + m._12 * v.y + m._13 * v.z,
+        m._21 * v.x + m._22 * v.y + m._23 * v.z,
+        m._31 * v.x + m._32 * v.y + m._33 * v.z
+    };
+}
+
+template <typename T>
+constexpr Matrix4x4<T> lookAt(const Vector3<T>& eye, const Vector3<T>& at, const Vector3<T>& up) {
+    const Vector3<T> z = normalize(eye - at);
+    const Vector3<T> x = normalize(cross(up, z));
+    const Vector3<T> y = cross(z, x);
+    return {
+        x.x, x.y, x.z, dot(x, eye),
+        y.x, y.y, y.z, dot(y, eye),
+        z.x, z.y, z.z, dot(z, eye),
         static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1)
     };
 }
