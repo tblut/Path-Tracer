@@ -1,4 +1,5 @@
 #include "Film.h"
+#include "ColorUtils.h"
 #include "stb_image_write.h"
 
 #include <algorithm>
