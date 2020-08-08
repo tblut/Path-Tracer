@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "MathUtils.h"
+#include "Shape.h"
 
 namespace pt {
 

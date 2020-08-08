@@ -22,7 +22,7 @@ public:
         float pu = (2.0f * u - 1.0f) * scaleX_;
         float pv = (2.0f * v - 1.0f) * scaleY_;
         Vec3 direction = transformVector3x4(viewMatrixTr_, Vec3(pu, pv, -1.0f));
-        return Ray(origin_, direction);
+        return Ray(origin_, normalize(direction));
     }
 
 private:

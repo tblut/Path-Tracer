@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Sphere.h"
 #include "Ray.h"
 
 #include <vector>
