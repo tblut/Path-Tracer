@@ -5,7 +5,7 @@
 namespace pt {
 
 RayHit Scene::intersect(const Ray& ray) const {
-    RayHit closestHit = miss;
+    RayHit closestHit = rayMiss;
     for (const Shape* shape : shapes_) {
         RayHit hit = shape->intersect(ray);
         if (hit.t >= 0.0f && (closestHit.t < 0.0f || hit.t < closestHit.t)) {

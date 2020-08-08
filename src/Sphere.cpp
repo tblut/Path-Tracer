@@ -16,7 +16,7 @@ RayHit Sphere::intersect(const Ray & ray) const {
     const float c = dot(oc, oc) - radius * radius;
     const float discriminant = b * b - 4.0f * a * c;
     if (discriminant < 0.0f) {
-        return miss;
+        return rayMiss;
     }
 
     const float tmin = (-b - std::sqrt(discriminant)) / (2.0f * a);

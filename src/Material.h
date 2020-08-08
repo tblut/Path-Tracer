@@ -6,6 +6,7 @@ namespace pt {
 
 struct Material {
     Vec3 baseColor;
+    Vec3 emissive;
 };
 
 } // namespace pt

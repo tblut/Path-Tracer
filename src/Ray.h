@@ -36,6 +36,6 @@ struct RayHit {
     const Material* material;
 };
 
-constexpr RayHit miss = RayHit(-inf<float>, Vec3(), nullptr);
+constexpr RayHit rayMiss = RayHit(-inf<float>, Vec3(), nullptr);
 
 } // namespace pt
