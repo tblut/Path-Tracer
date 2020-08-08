@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Film.h"
 #include "RandomSeries.h"
+#include "Material.h"
 
 namespace pt {
 
@@ -23,7 +24,7 @@ void Renderer::render(const Scene& scene, const Camera& camera, Film& film, uint
 Vec3 Renderer::radiance(const Ray& ray, const Scene& scene) {
     RayHit hit = scene.intersect(ray);
     if (hit.t >= 0.0f) {
-        return Vec3(1, 0, 0);
+        return hit.material->baseColor;
     }
 
     return Vec3(1);

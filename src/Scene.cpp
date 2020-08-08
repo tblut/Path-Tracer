@@ -3,20 +3,20 @@
 
 namespace pt {
 
-void Scene::addSphere(const Vec3& center, float radius) {
-    spheres_.emplace_back(center, radius);
-}
-
 RayHit Scene::intersect(const Ray& ray) const {
-    RayHit closestHit(-inf<float>, Vec3());
-    for (const auto& sphere : spheres_) {
-        RayHit hit = pt::intersect(ray, sphere);
+    RayHit closestHit = miss;
+    for (const Shape* shape : shapes_) {
+        RayHit hit = shape->intersect(ray);
         if (hit.t >= 0.0f && (closestHit.t < 0.0f || hit.t < closestHit.t)) {
             closestHit = hit;
         }
     }
 
     return closestHit;
+}
+
+void Scene::add(const Shape& shape) {
+    shapes_.push_back(&shape);
 }
 
 } // namespace pt
