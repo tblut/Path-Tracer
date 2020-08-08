@@ -12,8 +12,8 @@ class Camera {
 public:
     Camera(float fovY, float aspect, const Mat4& viewMatrix) {
         viewMatrixTr_ = transpose(viewMatrix);
-        Vec3 cameraTranslation(viewMatrixTr_[3].x, viewMatrixTr_[3].y, viewMatrixTr_[3].z);
-        origin_ = transformPoint3x4(viewMatrixTr_, -cameraTranslation);
+        Vec3 cameraTranslation(viewMatrix[0].w, viewMatrix[1].w, viewMatrix[2].w);
+        origin_ = transformVector3x4(viewMatrixTr_, -cameraTranslation);
         scaleY_ = std::tan(fovY * 0.5f);
         scaleX_ = scaleY_ * aspect;
     }

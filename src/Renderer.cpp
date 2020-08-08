@@ -22,7 +22,7 @@ void Renderer::render(const Camera& camera, Film& film, uint32_t spp) {
 }
 
 Vec3 Renderer::radiance(const Ray& ray) {
-    Sphere sphere(Vec3(0, 0, -2), 1);
+    Sphere sphere(Vec3(0, 2, -1), 1);
     RayHit hit = intersect(ray, sphere);
     if (hit.t >= 0.0f) {
         return Vec3(1, 0, 0);

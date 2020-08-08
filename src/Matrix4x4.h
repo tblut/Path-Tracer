@@ -151,9 +151,9 @@ constexpr Matrix4x4<T> lookAt(const Vector3<T>& eye, const Vector3<T>& at, const
     const Vector3<T> x = normalize(cross(up, z));
     const Vector3<T> y = cross(z, x);
     return {
-        x.x, x.y, x.z, dot(x, eye),
-        y.x, y.y, y.z, dot(y, eye),
-        z.x, z.y, z.z, dot(z, eye),
+        x.x, x.y, x.z, -dot(x, eye),
+        y.x, y.y, y.z, -dot(y, eye),
+        z.x, z.y, z.z, -dot(z, eye),
         static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1)
     };
 }
