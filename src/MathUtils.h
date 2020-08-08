@@ -1,11 +1,15 @@
 #pragma once
 
 #include <cmath>
+#include <limits>
 
 namespace pt {
 
 template <typename T>
 constexpr T pi = static_cast<T>(3.14159265358979323846);
+
+template <typename T>
+constexpr T inf = std::numeric_limits<T>::infinity();
 
 using std::abs;
 using std::floor;

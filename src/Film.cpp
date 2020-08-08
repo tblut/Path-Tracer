@@ -28,8 +28,8 @@ std::vector<uint8_t> Film::getImageBuffer() const {
     imageBuffer.reserve(width_ * height_ * 3);
 
     for (const auto& pixel : pixels_) {
-        Vec3 color = pixel.accumColor / static_cast<float>(pixel.numSamples);
-        color = linearToSRGB(color);
+        Vec3 color = pixel.accumColor / static_cast<float>(max(1u, pixel.numSamples));
+        color = linearToSRGB(saturate(color));
         imageBuffer.push_back(static_cast<uint8_t>(color.r * 255.0 + 0.5));
         imageBuffer.push_back(static_cast<uint8_t>(color.g * 255.0 + 0.5));
         imageBuffer.push_back(static_cast<uint8_t>(color.b * 255.0 + 0.5));
@@ -48,7 +48,7 @@ bool Film::saveToFile(std::string path) const {
     int bytesWritten = 0;
     if (ext == ".png") {
         bytesWritten = stbi_write_png(path.data(), static_cast<int>(width_),
-            static_cast<int>(height_), 3, image.data(), 3);
+            static_cast<int>(height_), 3, image.data(), width_ * sizeof(uint8_t) * 3);
     }
     else if (ext == ".jpg" || ext == ".jpeg") {
         bytesWritten = stbi_write_jpg(path.data(), static_cast<int>(width_),
