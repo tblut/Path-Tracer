@@ -1,13 +1,12 @@
 #include "Renderer.h"
+#include "Scene.h"
 #include "Camera.h"
 #include "Film.h"
-
-#include "Sphere.h"
 #include "RandomSeries.h"
 
 namespace pt {
 
-void Renderer::render(const Camera& camera, Film& film, uint32_t spp) {
+void Renderer::render(const Scene& scene, const Camera& camera, Film& film, uint32_t spp) {
     RandomSeries rng;
     for (uint32_t y = 0; y < film.getHeight(); y++) {
         for (uint32_t x = 0; x < film.getWidth(); x++) {
@@ -15,18 +14,18 @@ void Renderer::render(const Camera& camera, Film& film, uint32_t spp) {
                 float u = (x + rng.uniformFloat()) / static_cast<float>(film.getWidth() - 1);
                 float v = (y + rng.uniformFloat()) / static_cast<float>(film.getHeight() - 1);
                 Ray ray = camera.generateRay(u, v);
-                film.addSample(x, y, radiance(ray));
+                film.addSample(x, y, radiance(ray, scene));
             }
         }
     }
 }
 
-Vec3 Renderer::radiance(const Ray& ray) {
-    Sphere sphere(Vec3(0, 2, -1), 1);
-    RayHit hit = intersect(ray, sphere);
+Vec3 Renderer::radiance(const Ray& ray, const Scene& scene) {
+    RayHit hit = scene.intersect(ray);
     if (hit.t >= 0.0f) {
         return Vec3(1, 0, 0);
     }
+
     return Vec3(1);
 }
 

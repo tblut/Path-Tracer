@@ -7,15 +7,16 @@
 
 namespace pt {
 
+class Scene;
 class Camera;
 class Film;
 
 class Renderer {
 public:
-    void render(const Camera& camera, Film& film, uint32_t spp);
+    void render(const Scene& scene, const Camera& camera, Film& film, uint32_t spp);
 
 private:
-    Vec3 radiance(const Ray& ray);
+    Vec3 radiance(const Ray& ray, const Scene& scene);
 };
 
 } // namespace pt
