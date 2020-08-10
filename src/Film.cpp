@@ -25,13 +25,14 @@ void Film::addSample(uint32_t x, uint32_t y, const Vec3& color) {
     pixel.numSamples++;
 }
 
-std::vector<uint8_t> Film::getImageBuffer() const {
+std::vector<uint8_t> Film::getImageBuffer(bool tonemap) const {
     std::vector<uint8_t> imageBuffer;
     imageBuffer.reserve(width_ * height_ * 3);
 
     for (const auto& pixel : pixels_) {
         Vec3 color = pixel.accumColor / static_cast<float>(max(1u, pixel.numSamples));
-        color = linearToSRGB(saturate(color));
+        color = linearToSRGB(color);
+        color = tonemap ? tonemapACES(color) : saturate(color);
         imageBuffer.push_back(static_cast<uint8_t>(color.r * 255.0 + 0.5));
         imageBuffer.push_back(static_cast<uint8_t>(color.g * 255.0 + 0.5));
         imageBuffer.push_back(static_cast<uint8_t>(color.b * 255.0 + 0.5));
