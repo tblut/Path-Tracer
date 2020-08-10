@@ -26,7 +26,7 @@ RayHit Sphere::intersect(const Ray & ray) const {
     return RayHit(tmin, normal, this);
 }
 
-Vec3 Sphere::sample(const Vec3& p, float u1, float u2, float& pdf) const {
+Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float& pdf) const {
     Vec3 w = center - p;
     const float dist = length(w);
     const float cosThetaMax = std::sqrt(1.0f - (radius * radius) / (dist * dist));

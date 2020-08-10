@@ -30,12 +30,11 @@ Vec3 Renderer::radiance(const Scene& scene, const Ray& ray, Vec3 lambda, uint32_
 
     RayHit hit = scene.intersect(ray);
     if (hit.t < 0.0f) {
-        return Vec3(0.0f) * lambda;
+        return backgroundColor_ * lambda;
     }
     if (lengthSq(hit.shape->material->emissive) > 0.0f && depth == 0) {
         return lambda * hit.shape->material->emissive;
     }
-
 
     Vec3 intersectionPoint = ray.at(hit.t) + hit.normal * 0.001f;
 
@@ -46,7 +45,8 @@ Vec3 Renderer::radiance(const Scene& scene, const Ray& ray, Vec3 lambda, uint32_
         }
 
         float lightPdf;
-        Vec3 lightDir = shape->sample(intersectionPoint, rng_.uniformFloat(), rng_.uniformFloat(), lightPdf);
+        Vec3 lightDir = shape->sampleDirection(intersectionPoint, rng_.uniformFloat(), rng_.uniformFloat(), lightPdf);
+
         float cosTheta = dot(lightDir, hit.normal);
         if (cosTheta <= 0.0f) {
             continue;
@@ -54,10 +54,14 @@ Vec3 Renderer::radiance(const Scene& scene, const Ray& ray, Vec3 lambda, uint32_
 
         RayHit lightHit = scene.intersect(Ray(intersectionPoint, lightDir));
         if (lightHit.shape != shape || lightHit.shape == hit.shape) {
+            // TODO: If we hit a non-light source then we can continue the path here
             continue;
         }
 
-        color += lambda * shape->material->emissive * hit.shape->material->baseColor / pi<float> * cosTheta / lightPdf;
+        // TODO: Sample the BRDF as well and use multiple importance sampling
+
+        Vec3 brdf = brdfLambert(hit.shape->material->baseColor);
+        color += lambda * shape->material->emissive * brdf * cosTheta / lightPdf;
     }
 
     Vec3 b1, b2;
@@ -68,10 +72,18 @@ Vec3 Renderer::radiance(const Scene& scene, const Ray& ray, Vec3 lambda, uint32_
     float cosTheta = dot(hit.normal, wi);
     assert(cosTheta >= 0.0f);
     float pdf = pdfCosineHemisphere(hit.normal, wi);
-    lambda *= hit.shape->material->baseColor / pi<float> * cosTheta / pdf;
-    Ray newRay(intersectionPoint, wi);
-    color += lambda * radiance(scene, newRay, lambda, depth + 1);
+    Vec3 brdf = brdfLambert(hit.shape->material->baseColor);
+    lambda *= brdf * cosTheta / pdf;
+    
 
+    float p = max(lambda.r, max(lambda.g, lambda.b));
+    if (rng_.uniformFloat() <= p) {
+        lambda /= p;
+        Ray newRay(intersectionPoint, wi);
+        color += lambda * radiance(scene, newRay, lambda, depth + 1);
+    }
+    // TODO: Russian roulette after M bounces?
+    // TODO: Radiance clamping after N bounces?
     return color;
 }
 

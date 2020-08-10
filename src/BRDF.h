@@ -34,4 +34,8 @@ inline float pdfCosineHemisphere(const Vec3& normal, const Vec3& wi) {
     return dot(normal, wi) / pi<float>;
 }
 
+inline Vec3 brdfLambert(const Vec3& diffuseColor) {
+    return diffuseColor / pi<float>;
+}
+
 } // namespace pt
