@@ -22,6 +22,7 @@ void Renderer::render(const Scene& scene, const Camera& camera, Film& film) {
     for (std::thread& thread : workerThreads_) {
         thread.join();
     }
+    workerThreads_.clear();
 }
 
 void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
