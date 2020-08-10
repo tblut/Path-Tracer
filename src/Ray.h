@@ -4,7 +4,7 @@
 
 namespace pt {
 
-struct Material;
+class Shape;
 
 struct Ray {
     Ray() = default;
@@ -24,16 +24,16 @@ struct Ray {
 
 struct RayHit {
     RayHit() = default;
-    constexpr RayHit(float t_, const Vec3& normal_, const Material* material_)
+    constexpr RayHit(float t_, const Vec3& normal_, const Shape* shape_)
         : t(t_)
         , normal(normal_)
-        , material(material_)
+        , shape(shape_)
     {
     }
 
     float t;
     Vec3 normal;
-    const Material* material;
+    const Shape* shape;
 };
 
 constexpr RayHit rayMiss = RayHit(-inf<float>, Vec3(), nullptr);

@@ -5,6 +5,7 @@
 #include "RandomSeries.h"
 #include "Material.h"
 #include "BRDF.h"
+#include "Shape.h"
 
 namespace pt {
 
@@ -31,8 +32,33 @@ Vec3 Renderer::radiance(const Scene& scene, const Ray& ray, Vec3 lambda, uint32_
     if (hit.t < 0.0f) {
         return Vec3(0.0f) * lambda;
     }
+    if (lengthSq(hit.shape->material->emissive) > 0.0f && depth == 0) {
+        return lambda * hit.shape->material->emissive;
+    }
 
-    Vec3 color = hit.material->emissive * lambda;
+
+    Vec3 intersectionPoint = ray.at(hit.t) + hit.normal * 0.001f;
+
+    Vec3 color(0.0f);
+    for (auto shape : scene.getShapes()) {
+        if (lengthSq(shape->material->emissive) < 1e-6f) {
+            continue;
+        }
+
+        float lightPdf;
+        Vec3 lightDir = shape->sample(intersectionPoint, rng_.uniformFloat(), rng_.uniformFloat(), lightPdf);
+        float cosTheta = dot(lightDir, hit.normal);
+        if (cosTheta <= 0.0f) {
+            continue;
+        }
+
+        RayHit lightHit = scene.intersect(Ray(intersectionPoint, lightDir));
+        if (lightHit.shape != shape || lightHit.shape == hit.shape) {
+            continue;
+        }
+
+        color += lambda * shape->material->emissive * hit.shape->material->baseColor / pi<float> * cosTheta / lightPdf;
+    }
 
     Vec3 b1, b2;
     makeOrthonormalBasis(hit.normal, b1, b2);
@@ -40,9 +66,10 @@ Vec3 Renderer::radiance(const Scene& scene, const Ray& ray, Vec3 lambda, uint32_
     wi = transformVectorToBasis(wi, b1, b2, hit.normal);
 
     float cosTheta = dot(hit.normal, wi);
+    assert(cosTheta >= 0.0f);
     float pdf = pdfCosineHemisphere(hit.normal, wi);
-    lambda *= hit.material->baseColor * cosTheta / pdf;
-    Ray newRay(ray.at(hit.t) + wi * 0.001f, wi);
+    lambda *= hit.shape->material->baseColor / pi<float> * cosTheta / pdf;
+    Ray newRay(intersectionPoint, wi);
     color += lambda * radiance(scene, newRay, lambda, depth + 1);
 
     return color;

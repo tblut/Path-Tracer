@@ -21,6 +21,8 @@ public:
         }
     }
 
+    const std::vector<const Shape*>& getShapes() const { return shapes_; }
+
 private:
     std::vector<const Shape*> shapes_;
 };
