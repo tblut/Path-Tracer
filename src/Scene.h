@@ -13,18 +13,15 @@ class Scene {
 public:
     RayHit intersect(const Ray& ray) const;
     void add(const Shape& shape);
+    void compile();
 
-    template <typename T>
-    void add(std::initializer_list<T> shapes) {
-        for (auto&& shape : shapes) {
-            add(shape);
-        }
+    const std::vector<const Shape*>& getLights() const {
+        return lights_;
     }
-
-    const std::vector<const Shape*>& getShapes() const { return shapes_; }
 
 private:
     std::vector<const Shape*> shapes_;
+    std::vector<const Shape*> lights_;
 };
 
 } // namespace pt

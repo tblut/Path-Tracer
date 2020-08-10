@@ -20,4 +20,12 @@ void Scene::add(const Shape& shape) {
     shapes_.push_back(&shape);
 }
 
+void Scene::compile() {
+    for (const Shape* shape : shapes_) {
+        if (shape->isLight()) {
+            lights_.push_back(shape);
+        }
+    }
+}
+
 } // namespace pt

@@ -11,7 +11,7 @@ namespace pt {
 
 void Renderer::render(const Scene& scene, const Camera& camera, Film& film) {
     RandomSeries rng;
-    for (uint32_t y = 0; y < film.getHeight(); y++) {
+    for (int y = 0; y < (int)film.getHeight(); y++) {
         for (uint32_t x = 0; x < film.getWidth(); x++) {
             for (uint32_t s = 0; s < samplesPerPixel_; s++) {
                 float u = (x + rng.uniformFloat()) / static_cast<float>(film.getWidth() - 1);
@@ -32,20 +32,17 @@ Vec3 Renderer::radiance(const Scene& scene, const Ray& ray, Vec3 lambda, uint32_
     if (hit.t < 0.0f) {
         return backgroundColor_ * lambda;
     }
-    if (lengthSq(hit.shape->material->emissive) > 0.0f && depth == 0) {
-        return lambda * hit.shape->material->emissive;
+    if (hit.shape->isLight() && depth == 0) {
+        return lambda * hit.shape->material->emittance;
     }
 
     Vec3 intersectionPoint = ray.at(hit.t) + hit.normal * 0.001f;
 
     Vec3 color(0.0f);
-    for (auto shape : scene.getShapes()) {
-        if (lengthSq(shape->material->emissive) < 1e-6f) {
-            continue;
-        }
-
+    for (auto light : scene.getLights()) {
         float lightPdf;
-        Vec3 lightDir = shape->sampleDirection(intersectionPoint, rng_.uniformFloat(), rng_.uniformFloat(), lightPdf);
+        Vec3 lightDir = light->sampleDirection(intersectionPoint,
+            rng_.uniformFloat(), rng_.uniformFloat(), lightPdf);
 
         float cosTheta = dot(lightDir, hit.normal);
         if (cosTheta <= 0.0f) {
@@ -53,15 +50,14 @@ Vec3 Renderer::radiance(const Scene& scene, const Ray& ray, Vec3 lambda, uint32_
         }
 
         RayHit lightHit = scene.intersect(Ray(intersectionPoint, lightDir));
-        if (lightHit.shape != shape || lightHit.shape == hit.shape) {
-            // TODO: If we hit a non-light source then we can continue the path here
+        if (lightHit.shape != light || lightHit.shape == hit.shape) {
             continue;
         }
 
         // TODO: Sample the BRDF as well and use multiple importance sampling
 
         Vec3 brdf = brdfLambert(hit.shape->material->baseColor);
-        color += lambda * shape->material->emissive * brdf * cosTheta / lightPdf;
+        color += lambda * light->material->emittance * brdf * cosTheta / lightPdf;
     }
 
     Vec3 b1, b2;
@@ -75,14 +71,16 @@ Vec3 Renderer::radiance(const Scene& scene, const Ray& ray, Vec3 lambda, uint32_
     Vec3 brdf = brdfLambert(hit.shape->material->baseColor);
     lambda *= brdf * cosTheta / pdf;
     
-
     float p = max(lambda.r, max(lambda.g, lambda.b));
-    if (rng_.uniformFloat() <= p) {
-        lambda /= p;
+    if (depth < minRRDepth_ || rng_.uniformFloat() <= p) {
+        if (depth >= minRRDepth_) {
+            lambda /= p;
+        }
+
         Ray newRay(intersectionPoint, wi);
         color += lambda * radiance(scene, newRay, lambda, depth + 1);
     }
-    // TODO: Russian roulette after M bounces?
+
     // TODO: Radiance clamping after N bounces?
     return color;
 }
