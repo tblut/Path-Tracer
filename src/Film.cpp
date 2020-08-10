@@ -1,5 +1,6 @@
 #include "Film.h"
 #include "ColorUtils.h"
+#include "MathUtils.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -23,6 +24,27 @@ void Film::addSample(uint32_t x, uint32_t y, const Vec3& color) {
     auto& pixel = pixels_[x + y * width_];
     pixel.accumColor += color;
     pixel.numSamples++;
+}
+
+std::vector<Film::Tile> Film::getTiles(uint32_t tileWidth, uint32_t tileHeight) const {
+    const uint32_t numTilesX = (width_ + tileWidth - 1) / tileWidth;
+    const uint32_t numTilesY = (height_ + tileHeight - 1) / tileHeight;
+
+    std::vector<Tile> tiles;
+    tiles.reserve(numTilesX * numTilesY);
+    
+    for (uint32_t tileY = 0; tileY < numTilesY; tileY++) {
+        for (uint32_t tileX = 0; tileX < numTilesX; tileX++) {
+            Tile tile;
+            tile.startX = tileWidth * tileX;
+            tile.startY = tileHeight * tileY;
+            tile.endX = min(tileWidth * (tileX + 1) - 1, width_ - 1);
+            tile.endY = min(tileHeight * (tileY + 1) - 1, height_ - 1);
+            tiles.push_back(tile);
+        }
+    }
+
+    return tiles;
 }
 
 std::vector<uint8_t> Film::getImageBuffer(bool tonemap) const {

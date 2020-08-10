@@ -33,11 +33,11 @@ public:
         return static_cast<double>(uniformUint32()) / 0xffffffff;
     }
 
-private:
     // Seed number for initstate=42 and initseq=54
     static constexpr uint64_t defaultState = 1753877967969059832ull;
     static constexpr uint64_t defaultInc = 109ull;
 
+private:
     uint64_t state_ = defaultState;
     uint64_t inc_ = defaultInc;
 };

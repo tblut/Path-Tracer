@@ -11,9 +11,15 @@ namespace pt {
 
 class Film {
 public:
+    struct Tile {
+        uint32_t startX, startY;
+        uint32_t endX, endY;
+    };
+
     Film(uint32_t width, uint32_t height);
 
     void addSample(uint32_t x, uint32_t y, const Vec3& color);
+    std::vector<Tile> getTiles(uint32_t tileWidth, uint32_t tileHeight) const;
     std::vector<uint8_t> getImageBuffer(bool tonemap = true) const;
     bool saveToFile(std::string path) const;
 
