@@ -58,6 +58,16 @@ constexpr Vector3<T> clamp(const Vector3<T>& v, T minValue, T maxValue) {
 }
 
 template <typename T>
+constexpr T minComponent(const Vector3<T>& v) {
+    return min(v.x, min(v.y, v.z));
+}
+
+template <typename T>
+constexpr T maxComponent(const Vector3<T>& v) {
+    return max(v.x, max(v.y, v.z));
+}
+
+template <typename T>
 constexpr Vector3<T> saturate(const Vector3<T>& v) {
     return clamp(v, static_cast<T>(0), static_cast<T>(1));
 }
@@ -113,7 +123,7 @@ constexpr Vector3<T> cross(const Vector3<T>& a, const Vector3<T>& b) {
 
 template <typename T>
 constexpr Vector3<T> reflect(const Vector3<T>& i, const Vector3<T>& n) {
-    return i - static_cast<T>(2) * n * dot(i, n);
+    return static_cast<T>(2) * dot(i, n) * n - i;
 }
 
 template <typename T>

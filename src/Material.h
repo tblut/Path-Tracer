@@ -6,6 +6,8 @@ namespace pt {
 
 struct Material {
     Vec3 baseColor;
+    float roughness;
+    float metalness;
     Vec3 emittance;
 };
 

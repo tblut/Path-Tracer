@@ -43,7 +43,7 @@ Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float& pdf) cons
     w /= dist;
     Vec3 b1, b2;
     makeOrthonormalBasis(w, b1, b2);
-    return transformVectorToBasis(dir, b1, b2, w);
+    return localToWorld(dir, b1, b2, w);
 }
 
 } // namespace pt

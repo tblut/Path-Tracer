@@ -48,7 +48,8 @@ void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
                     float u = (x + rng.uniformFloat()) / static_cast<float>(film.getWidth() - 1);
                     float v = (y + rng.uniformFloat()) / static_cast<float>(film.getHeight() - 1);
                     Ray ray = camera.generateRay(u, v);
-                    film.addSample(x, y, radiance(scene, rng, ray, Vec3(1.0f)));
+                    Vec3 color = radiance(scene, rng, ray, Vec3(1.0f));
+                    film.addSample(x, y, color);
                 }
             }
         }
@@ -70,45 +71,89 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
         return lambda * hit.shape->material->emittance;
     }
 
+    Vec3 normal = hit.normal;
+    const Material* material = hit.shape->material;
     Vec3 intersectionPoint = ray.at(hit.t) + hit.normal * 0.001f;
+    Vec3 wo = normalize(-ray.direction);
+
+    float alpha = material->roughness * material->roughness;
+    Vec3 diffuse = material->baseColor * (1.0f - material->metalness);
+    Vec3 specular = lerp(Vec3(0.04f), material->baseColor, material->metalness);
 
     Vec3 color(0.0f);
     for (auto light : scene.getLights()) {
         float lightPdf;
-        Vec3 lightDir = light->sampleDirection(intersectionPoint,
+        Vec3 wi = light->sampleDirection(intersectionPoint,
             rng.uniformFloat(), rng.uniformFloat(), lightPdf);
 
-        float cosTheta = dot(lightDir, hit.normal);
+        float cosTheta = dot(wi, hit.normal);
         if (cosTheta <= 0.0f) {
             continue;
         }
 
-        RayHit lightHit = scene.intersect(Ray(intersectionPoint, lightDir));
+        RayHit lightHit = scene.intersect(Ray(intersectionPoint, wi));
         if (lightHit.shape != light || lightHit.shape == hit.shape) {
             continue;
         }
 
         // TODO: Sample the BRDF as well and use multiple importance sampling
 
-        Vec3 brdf = brdfLambert(hit.shape->material->baseColor);
+        Vec3 diffuseBrdf = diffuse_Lambert(diffuse);
+        Vec3 specularBrdf = specular_GGX(normal, wo, wi, specular, alpha);
+        Vec3 brdf = diffuseBrdf + specularBrdf;
+
         color += lambda * light->material->emittance * brdf * cosTheta / lightPdf;
     }
 
+    float maxD = maxComponent(diffuse);
+    float maxS = maxComponent(Fr_Schlick(hit.normal, wo, specular));
+    float Pd = maxD / (maxD + maxS);
+    float Ps = maxS / (maxD + maxS);
+
     Vec3 b1, b2;
     makeOrthonormalBasis(hit.normal, b1, b2);
-    Vec3 wi = sampleCosineHemisphere(rng.uniformFloat(), rng.uniformFloat());
-    wi = transformVectorToBasis(wi, b1, b2, hit.normal);
 
-    float cosTheta = max(dot(hit.normal, wi), 0.0f);
-    assert(cosTheta >= 0.0f);
-    float pdf = pdfCosineHemisphere(hit.normal, wi);
-    Vec3 brdf = brdfLambert(hit.shape->material->baseColor);
-    lambda *= brdf * cosTheta / pdf;
+    Vec3 wi;
+    if (rng.uniformFloat() <= Pd) {
+        Vec3 brdf = diffuse_Lambert(diffuse);
+        wi = sampleCosineHemisphere(rng.uniformFloat(), rng.uniformFloat());
+        wi = localToWorld(wi, b1, b2, normal);
+        float pdf = pdfCosineHemisphere(normal, wi);
+        float dotNL = dot(normal, wi);
+
+        if (dotNL <= 0.0f) {
+            lambda *= 0.0f;
+        }
+        else {
+            assert(pdf > 0.0f && !std::isinf(pdf) && !std::isnan(pdf));
+            assert(Pd > 0.0f);
+            lambda *= brdf * dotNL / (pdf * Pd);
+        }
+    }
+    else {
+        Vec3 wh = sampleGGX(alpha, rng.uniformFloat(), rng.uniformFloat());
+        assert(length(wh) - 1.0f < 1e-6f);
+        wh = localToWorld(wh, b1, b2, normal);
+        wi = normalize(reflect(wo, wh));
+        float pdf = pdfGGX(normal, wh, wo, alpha);
+        Vec3 brdf = specular_GGX(normal, wo, wi, specular, alpha);
+        float dotNL = dot(normal, wi);
+
+        if (dotNL <= 0.0f || dot(wh, wi) <= 0.0f) {
+            lambda *= 0.0f;
+        }
+        else {
+            assert(pdf > 0.0f && !std::isinf(pdf) && !std::isnan(pdf));
+            assert(Ps > 0.0f);
+            lambda *= brdf * dotNL / (pdf * Ps);
+        }
+    }
     
     float p = max(lambda.r, max(lambda.g, lambda.b));
     if (depth < minRRDepth_ || rng.uniformFloat() <= p) {
         if (depth >= minRRDepth_) {
             lambda /= p;
+            assert(p > 0.0f);
         }
 
         Ray newRay(intersectionPoint, wi);
