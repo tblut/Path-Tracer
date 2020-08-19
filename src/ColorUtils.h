@@ -30,6 +30,11 @@ inline Vector3<T> srgbToLinear(const Vector3<T>& srgb) {
     return { srgbToLinear(srgb.r), srgbToLinear(srgb.g), srgbToLinear(srgb.b) };
 }
 
+template <typename T>
+inline Vector3<T> tonemapReinhard(const Vector3<T>& hdrSrgb) {
+    return saturate(hdrSrgb / (Vector3<T>(static_cast<T>(1)) + hdrSrgb));
+}
+
 // See: https://github.com/TheRealMJP/BakingLab/blob/master/BakingLab/ACES.hlsl
 template <typename T>
 inline Vector3<T> tonemapACES(const Vector3<T>& hdrSrgb) {
