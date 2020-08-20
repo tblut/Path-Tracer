@@ -1,6 +1,6 @@
 #include "Sphere.h"
 #include "MathUtils.h"
-#include "BRDF.h"
+#include "OrthonormalBasis.h"
 
 namespace pt {
 
@@ -26,7 +26,7 @@ RayHit Sphere::intersect(const Ray & ray) const {
     return RayHit(tmin, normal, this);
 }
 
-Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float& pdf) const {
+Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) const {
     Vec3 w = center - p;
     const float dist = length(w);
     const float cosThetaMax = std::sqrt(1.0f - (radius * radius) / (dist * dist));
@@ -38,12 +38,19 @@ Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float& pdf) cons
         std::sin(phi) * sinTheta,
         std::cos(theta)
     );
-    pdf = 1.0f / (2.0f * pi<float> * (1.0f - cosThetaMax));
+    if (pdf) {
+        *pdf = 1.0f / (2.0f * pi<float> * (1.0f - cosThetaMax));
+    }
 
     w /= dist;
-    Vec3 b1, b2;
-    makeOrthonormalBasis(w, b1, b2);
-    return localToWorld(dir, b1, b2, w);
+    OrthonormalBasis basis(w);
+    return basis.localToWorld(dir);
+}
+
+float Sphere::pdf(const Vec3& p) const {
+    const float dist = length(center - p);
+    const float cosThetaMax = std::sqrt(1.0f - (radius * radius) / (dist * dist));
+    return 1.0f / (2.0f * pi<float> * (1.0f - cosThetaMax));
 }
 
 } // namespace pt

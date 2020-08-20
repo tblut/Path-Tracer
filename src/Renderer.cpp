@@ -3,7 +3,6 @@
 #include "Camera.h"
 #include "RandomSeries.h"
 #include "Material.h"
-#include "BRDF.h"
 #include "Shape.h"
 #include "OrthonormalBasis.h"
 
@@ -71,20 +70,15 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
     }
 
     Vec3 normal = hit.normal;
-    const Material* material = hit.shape->material;
     Vec3 intersectionPoint = ray.at(hit.t) + hit.normal * 0.001f;
     Vec3 wo = normalize(-ray.direction);
-    OrthonormalBasis basis(normal);
-
-    float alpha = material->roughness * material->roughness;
-    Vec3 diffuse = material->baseColor * (1.0f - material->metalness);
-    Vec3 specular = lerp(Vec3(0.04f), material->baseColor, material->metalness);
+    const Material* material = hit.shape->material;
 
     Vec3 color(0.0f);
     for (auto light : scene.getLights()) {
         float lightPdf;
         Vec3 wi = light->sampleDirection(intersectionPoint,
-            rng.uniformFloat(), rng.uniformFloat(), lightPdf);
+            rng.uniformFloat(), rng.uniformFloat(), &lightPdf);
 
         float cosTheta = dot(wi, hit.normal);
         if (cosTheta <= 0.0f) {
@@ -96,54 +90,23 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
             continue;
         }
 
-        Vec3 diffuseBrdf = diffuse_Lambert(diffuse);
-        Vec3 specularBrdf = specular_GGX(normal, wo, wi, specular, alpha);
-        Vec3 brdf = diffuseBrdf + specularBrdf;
+        Vec3 brdf = material->evaluate(wi, wo, normal);
 
         // TODO: Multiple importance sampling
 
         color += lambda * light->material->emittance * brdf * cosTheta / lightPdf;
     }
 
-    float maxD = maxComponent(diffuse);
-    float maxS = maxComponent(Fr_Schlick(hit.normal, wo, specular));
-    float Pd = maxD / (maxD + maxS);
-    float Ps = maxS / (maxD + maxS);
-
-    Vec3 wi;
-    if (rng.uniformFloat() <= Pd) {
-        Vec3 brdf = diffuse_Lambert(diffuse);
-        wi = sampleCosineHemisphere(rng.uniformFloat(), rng.uniformFloat());
-        wi = basis.localToWorld(wi);
-        float pdf = pdfCosineHemisphere(normal, wi);
-        float dotNL = dot(normal, wi);
-
-        if (dotNL <= 0.0f) {
-            lambda *= 0.0f;
-        }
-        else {
-            assert(pdf > 0.0f && !std::isinf(pdf) && !std::isnan(pdf));
-            assert(Pd > 0.0f);
-            lambda *= brdf * dotNL / (pdf * Pd);
-        }
+    float pdf;
+    Vec3 wi = material->sampleDirection(wo, normal, rng.uniformFloat(), rng.uniformFloat(), &pdf);
+    float cosTheta = dot(normal, wi);
+    if (cosTheta <= 0.0f) {
+        lambda *= 0.0f;
     }
     else {
-        Vec3 wh = sampleGGX(alpha, rng.uniformFloat(), rng.uniformFloat());
-        assert(length(wh) - 1.0f < 1e-6f);
-        wh = basis.localToWorld(wh);
-        wi = normalize(reflect(wo, wh));
-        float pdf = pdfGGX(normal, wh, wo, alpha);
-        Vec3 brdf = specular_GGX(normal, wo, wi, specular, alpha);
-        float dotNL = dot(normal, wi);
-
-        if (dotNL <= 0.0f || dot(wh, wi) <= 0.0f) {
-            lambda *= 0.0f;
-        }
-        else {
-            assert(pdf > 0.0f && !std::isinf(pdf) && !std::isnan(pdf));
-            assert(Ps > 0.0f);
-            lambda *= brdf * dotNL / (pdf * Ps);
-        }
+        assert(pdf > 0.0f && !std::isinf(pdf) && !std::isnan(pdf));
+        Vec3 brdf = material->evaluate(wi, wo, normal);
+        lambda *= brdf * cosTheta / pdf;
     }
     
     float p = max(lambda.r, max(lambda.g, lambda.b));
