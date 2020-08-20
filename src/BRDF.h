@@ -8,27 +8,6 @@
 
 namespace pt {
 
-// See: https://graphics.pixar.com/library/OrthonormalB/paper.pdf
-inline void makeOrthonormalBasis(const Vec3& normal, Vec3& b1, Vec3& b2) {
-    const float sign = std::copysign(1.0f, normal.z);
-    const float a = -1.0f / (sign + normal.z);
-    const float b = normal.x * normal.y * a;
-    b1 = Vec3(1.0f + sign * normal.x * normal.x * a, sign * b, -sign * normal.x);
-    b2 = Vec3(b, sign + normal.y * normal.y * a, -normal.y);
-}
-
-inline Vec3 localToWorld(const Vec3& v, const Vec3& b1, const Vec3& b2, const Vec3& b3) {
-    return Vec3(
-        v.x * b1.x + v.y * b2.x + v.z * b3.x,
-        v.x * b1.y + v.y * b2.y + v.z * b3.y,
-        v.x * b1.z + v.y * b2.z + v.z * b3.z
-    );
-}
-
-inline Vec3 worldToLocal(const Vec3& v, const Vec3& b1, const Vec3& b2, const Vec3& b3) {
-    return Vec3(dot(v, b1), dot(v, b2), dot(v, b3));
-}
-
 inline Vec3 sampleCosineHemisphere(float u1, float u2) {
     const float r = std::sqrt(u1);
     const float phi = 2.0f * pi<float> * u2;

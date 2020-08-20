@@ -5,6 +5,7 @@
 #include "Material.h"
 #include "BRDF.h"
 #include "Shape.h"
+#include "OrthonormalBasis.h"
 
 namespace pt {
 
@@ -54,8 +55,6 @@ void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
             }
         }
     }
-
-    
 }
 
 Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, Vec3 lambda, uint32_t depth) {
@@ -75,6 +74,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
     const Material* material = hit.shape->material;
     Vec3 intersectionPoint = ray.at(hit.t) + hit.normal * 0.001f;
     Vec3 wo = normalize(-ray.direction);
+    OrthonormalBasis basis(normal);
 
     float alpha = material->roughness * material->roughness;
     Vec3 diffuse = material->baseColor * (1.0f - material->metalness);
@@ -96,11 +96,11 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
             continue;
         }
 
-        // TODO: Sample the BRDF as well and use multiple importance sampling
-
         Vec3 diffuseBrdf = diffuse_Lambert(diffuse);
         Vec3 specularBrdf = specular_GGX(normal, wo, wi, specular, alpha);
         Vec3 brdf = diffuseBrdf + specularBrdf;
+
+        // TODO: Multiple importance sampling
 
         color += lambda * light->material->emittance * brdf * cosTheta / lightPdf;
     }
@@ -110,14 +110,11 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
     float Pd = maxD / (maxD + maxS);
     float Ps = maxS / (maxD + maxS);
 
-    Vec3 b1, b2;
-    makeOrthonormalBasis(hit.normal, b1, b2);
-
     Vec3 wi;
     if (rng.uniformFloat() <= Pd) {
         Vec3 brdf = diffuse_Lambert(diffuse);
         wi = sampleCosineHemisphere(rng.uniformFloat(), rng.uniformFloat());
-        wi = localToWorld(wi, b1, b2, normal);
+        wi = basis.localToWorld(wi);
         float pdf = pdfCosineHemisphere(normal, wi);
         float dotNL = dot(normal, wi);
 
@@ -133,7 +130,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
     else {
         Vec3 wh = sampleGGX(alpha, rng.uniformFloat(), rng.uniformFloat());
         assert(length(wh) - 1.0f < 1e-6f);
-        wh = localToWorld(wh, b1, b2, normal);
+        wh = basis.localToWorld(wh);
         wi = normalize(reflect(wo, wh));
         float pdf = pdfGGX(normal, wh, wo, alpha);
         Vec3 brdf = specular_GGX(normal, wo, wi, specular, alpha);

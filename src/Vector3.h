@@ -113,6 +113,11 @@ constexpr Vector3<T> normalize(const Vector3<T>& a) {
 }
 
 template <typename T>
+constexpr bool isNormalized(const Vector3<T>& a, T eps = static_cast<T>(1.0e-6)) {
+    return abs(lengthSq(a) - 1) < eps;
+}
+
+template <typename T>
 constexpr Vector3<T> cross(const Vector3<T>& a, const Vector3<T>& b) {
     return {
         a.y * b.z - a.z * b.y,

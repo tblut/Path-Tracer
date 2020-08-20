@@ -49,6 +49,16 @@ constexpr Vector4<T> max(const Vector4<T>& a, const Vector4<T>& b) {
 }
 
 template <typename T>
+constexpr T minComponent(const Vector4<T>& v) {
+    return min(v.x, min(v.y, min(v.z, v.w)));
+}
+
+template <typename T>
+constexpr T maxComponent(const Vector4<T>& v) {
+    return max(v.x, max(v.y, max(v.z, v.w)));
+}
+
+template <typename T>
 constexpr Vector4<T> clamp(const Vector4<T>& v, T minValue, T maxValue) {
     return {
         max(min(v.x, maxValue), minValue),
@@ -101,6 +111,11 @@ inline T length(const Vector4<T>& a) {
 template <typename T>
 constexpr Vector4<T> normalize(const Vector4<T>& a) {
     return a * (static_cast<T>(1) / length(a));
+}
+
+template <typename T>
+constexpr bool isNormalized(const Vector4<T>& a, T eps = static_cast<T>(1.0e-6)) {
+    return abs(lengthSq(a) - 1) < eps;
 }
 
 using Vec4 = Vector4<float>;
