@@ -2,6 +2,7 @@
 
 #include "MathUtils.h"
 
+#include <limits>
 #include <cstdint>
 
 namespace pt {
@@ -17,6 +18,7 @@ public:
         uniformUint32();
     }
 
+    // Range: [0,UINT32_MAX]
     constexpr uint32_t uniformUint32() {
         uint64_t oldState = state_;
         state_ = oldState * 6364136223846793005ull + (inc_ | 1);
@@ -25,12 +27,14 @@ public:
         return (xorShifted >> rot) | (xorShifted << ((~rot + 1u) & 31));
     }
 
+    // Range: [0,1)
     constexpr float uniformFloat() {
-        return static_cast<float>(uniformUint32()) / 0xffffffff;
+        return min(oneMinusEpsilon<float>, static_cast<float>(uniformUint32()) / 0xffffffff);
     }
 
+    // Range: [0,1)
     constexpr double uniformDouble() {
-        return static_cast<double>(uniformUint32()) / 0xffffffff;
+        return min(oneMinusEpsilon<double>, static_cast<double>(uniformUint32()) / 0xffffffff);
     }
 
     // Seed number for initstate=42 and initseq=54

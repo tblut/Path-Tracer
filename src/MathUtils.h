@@ -11,6 +11,9 @@ constexpr T pi = static_cast<T>(3.14159265358979323846);
 template <typename T>
 constexpr T inf = std::numeric_limits<T>::infinity();
 
+template <typename T>
+constexpr T oneMinusEpsilon = static_cast<T>(1.0) - std::numeric_limits<T>::epsilon();
+
 using std::abs;
 using std::floor;
 using std::ceil;
@@ -38,6 +41,11 @@ constexpr T saturate(T value) {
 template <typename T>
 constexpr T lerp(T a, T b, T t) {
     return (static_cast<T>(1) - t) * a + t * b;
+}
+
+template <typename T>
+constexpr T remap(T value, T low1, T high1, T low2, T high2) {
+    return low2 + (value - low1) * (high2 - low2) / (high1 - low1);
 }
 
 template <typename T>
