@@ -140,6 +140,7 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
             0.0f, oneMinusEpsilon<float>);
 
         wi = sampleCosineHemisphere(u1, u2);
+        assert(isNormalized(wi));
         wi = basis.localToWorld(wi);
         wh = normalize(wi + wo);
     }
@@ -150,7 +151,7 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
             0.0f, oneMinusEpsilon<float>);
 
         wh = sampleGGX(alpha, u1, u2);
-        assert(length(wh) - 1.0f < 1e-6f);
+        assert(isNormalized(wh));
         wh = basis.localToWorld(wh);
         wi = normalize(reflect(wo, wh));
     }

@@ -114,7 +114,7 @@ constexpr Vector3<T> normalize(const Vector3<T>& a) {
 
 template <typename T>
 constexpr bool isNormalized(const Vector3<T>& a, T eps = static_cast<T>(1.0e-6)) {
-    return abs(lengthSq(a) - 1) < eps;
+    return abs(lengthSq(a) - static_cast<T>(1)) < eps;
 }
 
 template <typename T>

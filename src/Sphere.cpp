@@ -22,7 +22,7 @@ RayHit Sphere::intersect(const Ray & ray) const {
     }
 
     const float tmin = (-b - std::sqrt(discriminant)) / (2.0f * a);
-    const Vec3 normal = (ray.at(tmin) - center) / radius;
+    const Vec3 normal = normalize(ray.at(tmin) - center);
     return RayHit(tmin, normal, this);
 }
 
@@ -44,7 +44,7 @@ Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) cons
 
     w /= dist;
     OrthonormalBasis basis(w);
-    return basis.localToWorld(dir);
+    return normalize(basis.localToWorld(dir));
 }
 
 float Sphere::pdf(const Vec3& p) const {

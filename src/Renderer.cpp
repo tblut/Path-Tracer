@@ -94,6 +94,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
 
         // TODO: Multiple importance sampling
 
+        assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
         color += lambda * light->material->emittance * brdf * cosTheta / lightPdf;
     }
 
@@ -101,19 +102,18 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
     Vec3 wi = material->sampleDirection(wo, normal, rng.uniformFloat(), rng.uniformFloat(), &pdf);
     float cosTheta = dot(normal, wi);
     if (cosTheta <= 0.0f) {
-        lambda *= 0.0f;
+        return color;
     }
-    else {
-        assert(pdf > 0.0f && !std::isinf(pdf) && !std::isnan(pdf));
-        Vec3 brdf = material->evaluate(wi, wo, normal);
-        lambda *= brdf * cosTheta / pdf;
-    }
+
+    assert(pdf > 0.0f && !std::isinf(pdf) && !std::isnan(pdf));
+    Vec3 brdf = material->evaluate(wi, wo, normal);
+    lambda *= brdf * cosTheta / pdf;
     
-    float p = max(lambda.r, max(lambda.g, lambda.b));
-    if (depth < minRRDepth_ || rng.uniformFloat() <= p) {
+    float rrProb = max(lambda.r, max(lambda.g, lambda.b));
+    if (depth < minRRDepth_ || rng.uniformFloat() <= rrProb) {
         if (depth >= minRRDepth_) {
-            lambda /= p;
-            assert(p > 0.0f);
+            assert(rrProb > 0.0f);
+            lambda /= rrProb;
         }
 
         Ray newRay(intersectionPoint, wi);
