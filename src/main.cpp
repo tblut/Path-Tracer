@@ -6,6 +6,7 @@
 #include "Material.h"
 #include "Sphere.h"
 #include "Ray.h"
+#include "ColorUtils.h"
 
 int main(int argc, char** argv) {
     pt::Film film(640, 480);
@@ -15,12 +16,12 @@ int main(int argc, char** argv) {
         pt::lookAt(pt::Vec3(00.0f, 0.0f, 5.0f), pt::Vec3(0.0f, 0.0f, 0.0f), pt::Vec3(0, 1, 0))
     );
 
-    pt::Material redMat{ pt::Vec3(1, 0, 0), 1.0f, 0.0f, pt::Vec3(0) };
-    pt::Material greenMat{ pt::Vec3(0, 1, 0), 1.0f, 0.0f, pt::Vec3(0) };
-    pt::Material whiteMat{ pt::Vec3(1, 1, 1), 1.0f, 0.0f, pt::Vec3(0) };
-    pt::Material plasticMat{ pt::Vec3(0.8f, 0.8f, 0.8f), 0.2f, 0.0f, pt::Vec3(0) };
-    pt::Material metallMat{ pt::Vec3(1, 1, 1), 0.3f, 1.0f, pt::Vec3(0) };
-    pt::Material lightMat{ pt::Vec3(0), 1.0f, 0.0f, pt::Vec3(8) };
+    pt::Material redMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0, 0)), 1.0f, 0.0f, pt::Vec3(0) };
+    pt::Material greenMat{ pt::srgbToLinear(pt::Vec3(0, 0.8f, 0)), 1.0f, 0.0f, pt::Vec3(0) };
+    pt::Material whiteMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 1.0f, 0.0f, pt::Vec3(0) };
+    pt::Material plasticMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 0.2f, 0.0f, pt::Vec3(0) };
+    pt::Material metallMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 0.3f, 1.0f, pt::Vec3(0) };
+    pt::Material lightMat{ pt::Vec3(0), 1.0f, 0.0f, pt::Vec3(16) };
     pt::Material lightMat2{ pt::Vec3(0), 1.0f, 0.0f, pt::Vec3(100) };
 
     pt::Sphere left(pt::Vec3(-1002, 0, 0), 1000, redMat);
@@ -28,7 +29,7 @@ int main(int argc, char** argv) {
     pt::Sphere back(pt::Vec3(0, 0, -1002), 1000, whiteMat);
     pt::Sphere top(pt::Vec3(0, 1002, 0), 1000, whiteMat);
     pt::Sphere bottom(pt::Vec3(0, -1002, 0), 1000, whiteMat);
-    pt::Sphere light(pt::Vec3(0.0f, 2.8f, 0.0f), 1.0f, lightMat);
+    pt::Sphere light(pt::Vec3(0.0f, 2.6f, 0.0f), 1.0f, lightMat);
     //pt::Sphere light2(pt::Vec3(-1, 1.f, -1.5f), 0.1f, lightMat2);
     pt::Sphere sphere1(pt::Vec3(-0.75f, -1.2f, -0.75f), 0.75f, plasticMat);
     pt::Sphere sphere2(pt::Vec3(0.8f, -1.25f, 0.5f), 0.75f, metallMat);
@@ -46,11 +47,11 @@ int main(int argc, char** argv) {
     scene.compile();
 
     pt::Renderer renderer;
-    renderer.setSamplesPerPixel(2048*2);
+    renderer.setSamplesPerPixel(512);
     renderer.setMaxDepth(10);
     //renderer.setMinRRDepth(10000);
     renderer.render(scene, camera, film);
-    film.saveToFile("test_4k_spp.png");
+    film.saveToFile("test.png");
 
     return 0;
 }

@@ -106,7 +106,39 @@ Vec3 sampleGGX(float alpha, float u1, float u2) {
 }
 
 float pdfGGX(const Vec3& normal, const Vec3& wh, const Vec3& wo, float alpha) {
-    return D_GGX(wh, normal, alpha) * dot(wh, normal) / (4 * dot(wo, wh));
+    return D_GGX(wh, normal, alpha) * dot(wh, normal) / (4.0f * dot(wo, wh));
+}
+
+// See: http://jcgt.org/published/0007/04/01/paper.pdf
+Vec3 sampleGGXVNDF(const Vec3& wo, float alpha, float u1, float u2) {
+    // Transform view direction to hemisphere configuration
+    Vec3 woHemi = normalize(Vec3(alpha * wo.x, alpha * wo.y, wo.z));
+
+    // Create orthonormal basis
+    float length2 = woHemi.x * woHemi.x + woHemi.y * woHemi.y;
+    Vec3 b1 = length2 > 0.0f
+        ? Vec3(-woHemi.y, woHemi.x, 0.0f) * (1.0f / std::sqrt(length2))
+        : Vec3(1.0f, 0.0f, 0.0f);
+    Vec3 b2 = cross(woHemi, b1);
+
+    // Parameterization of projected area
+    float r = std::sqrt(u1);
+    float phi = 2.0f * pi<float> * u2;
+    float t1 = r * std::cos(phi);
+    float t2 = r * std::sin(phi);
+    float s = 0.5f * (1.0f + woHemi.z);
+    t2 = (1.0f - s) * sqrt(1.0f - t1 * t1) + s * t2;
+
+    // Reprojection onto hemisphere
+    Vec3 whHemi = t1 * b1 + t2 * b2 + std::sqrt(max(0.0f, 1.0f - t1 * t1 - t2 * t2)) * woHemi;
+
+    // Transforming half vector back to ellipsoid configuration
+    return normalize(Vec3(alpha * whHemi.x, alpha * whHemi.y, max(0.0f, whHemi.z)));
+}
+
+float pdfGGXVNDF(const Vec3& normal, const Vec3& wh, const Vec3& wo, float alpha) {
+    float pdf = G1_Smith_GGX(wo, wh, normal, alpha) * D_GGX(wh, normal, alpha) * dot(wo, wh) / wo.z;
+    return pdf / (4.0f * dot(wo, wh));
 }
 
 } // namespace
@@ -120,7 +152,7 @@ Vec3 Material::evaluate(const Vec3& wi, const Vec3& wo, const Vec3& normal) cons
     return diffuse_Lambert(kD) + specular_GGX(normal, wo, wi, kS, alpha);
 }
 
-Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
+Vec3 Material::sampleDirection(Vec3 wo, Vec3 normal,
         float u1, float u2, float* pdf) const {
     float alpha = roughness * roughness;
     Vec3 kD = baseColor * (1.0f - metalness);
@@ -131,8 +163,11 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
     float Pd = maxD / (maxD + maxS);
     float Ps = maxS / (maxD + maxS);
 
-    Vec3 wi, wh;
     OrthonormalBasis basis(normal);
+    wo = basis.worldToLocal(wo);
+    normal = basis.worldToLocal(normal);
+
+    Vec3 wi, wh;
     if (u1 < Pd) {
         // Reuse random variable
         u1 = remap(u1,
@@ -141,7 +176,6 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
 
         wi = sampleCosineHemisphere(u1, u2);
         assert(isNormalized(wi));
-        wi = basis.localToWorld(wi);
         wh = normalize(wi + wo);
     }
     else {
@@ -150,17 +184,17 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
             Pd, oneMinusEpsilon<float>,
             0.0f, oneMinusEpsilon<float>);
 
-        wh = sampleGGX(alpha, u1, u2);
+        wh = sampleGGXVNDF(wo, alpha, u1, u2);
         assert(isNormalized(wh));
-        wh = basis.localToWorld(wh);
+        assert(dot(wh, wo) >= 0.0f);
         wi = normalize(reflect(wo, wh));
     }
 
     if (pdf) {
-        *pdf = Pd * pdfCosineHemisphere(normal, wi) + Ps * pdfGGX(normal, wh, wo, alpha);
+        *pdf = Pd * pdfCosineHemisphere(normal, wi) + Ps * pdfGGXVNDF(normal, wh, wo, alpha);
     }
 
-    return wi;
+    return basis.localToWorld(wi);
 }
 
 float Material::pdf(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {
@@ -174,7 +208,7 @@ float Material::pdf(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {
     float Ps = maxS / (maxD + maxS);
     Vec3 wh = normalize(wi + wo);
 
-    return Pd * pdfCosineHemisphere(normal, wi) + Ps * pdfGGX(normal, wh, wo, alpha);
+    return Pd * pdfCosineHemisphere(normal, wi) + Ps * pdfGGX(normal, wh, wi, alpha);
 }
 
 } // namespace pt
