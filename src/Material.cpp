@@ -13,7 +13,7 @@ Vec3 Fr_Schlick(const Vec3& wh, const Vec3& wi, const Vec3& f0) {
 }
 
 float D_GGX(const Vec3& wh, const Vec3& normal, float alpha) {
-    const float dotNH = dot(wh, normal);
+    const float dotNH = cosTheta(wh);
     if (dotNH <= 0.0f) {
         return 0.0f;
     }
@@ -29,9 +29,9 @@ float G1_Smith_GGX(const Vec3& w, const Vec3& wh, const Vec3& normal, float alph
     }
 
     const float alpha2 = alpha * alpha;
-    const float dotNW = dot(w, normal);
+    const float dotNW = cosTheta(w);
     const float dotNW2 = dotNW * dotNW;
-    const float lambda = (std::sqrt(1.0f + alpha2 * (1.0f - dotNW2) / dotNW2) - 1.0f) / 2.0f;
+    const float lambda = (-1.0f + std::sqrt(alpha2 * (1.0f - dotNW2) / dotNW2 + 1.0f)) / 2.0f;
     return 1.0f / (1.0f + lambda);
 }
 
@@ -44,8 +44,8 @@ float G2_SmithHeightCorrelated_GGX(const Vec3& wi, const Vec3& wo, const Vec3& w
         return 0.0f;
     }
 
-    const float dotNO = dot(normal, wo);
-    const float dotNI = dot(normal, wi);
+    const float dotNO = cosTheta(wo);
+    const float dotNI = cosTheta(wi);
     const float dotNO2 = dotNO * dotNO;
     const float dotNI2 = dotNI * dotNI;
     assert(dotNO2 > 0.0f);
@@ -68,9 +68,9 @@ Vec3 diffuse_Lambert(const Vec3& diffuseColor) {
 Vec3 specular_GGX(const Vec3& normal, const Vec3& wo, const Vec3& wi, const Vec3& f0, float alpha) {
     const Vec3 wh = normalize(wo + wi);
     const Vec3 F = Fr_Schlick(wh, wi, f0);
-    const float dotNO = dot(normal, wo);
-    const float dotNI = dot(normal, wi);
-    const float dotNH = dot(normal, wh);
+    const float dotNO = cosTheta(wo);
+    const float dotNI = cosTheta(wi);
+    const float dotNH = cosTheta(wh);
 
     if (dotNO <= 0.0f || dotNI <= 0.0f || dotNH <= 0.0f) {
         return Vec3(0.0f);
@@ -91,7 +91,7 @@ Vec3 sampleCosineHemisphere(float u1, float u2) {
 }
 
 float pdfCosineHemisphere(const Vec3& normal, const Vec3& wi) {
-    return dot(normal, wi) / pi<float>;
+    return cosTheta(wi) / pi<float>;
 }
 
 Vec3 sampleGGX(float alpha, float u1, float u2) {
@@ -137,8 +137,8 @@ Vec3 sampleGGXVNDF(const Vec3& wo, float alpha, float u1, float u2) {
 }
 
 float pdfGGXVNDF(const Vec3& normal, const Vec3& wh, const Vec3& wo, float alpha) {
-    float pdf = G1_Smith_GGX(wo, wh, normal, alpha) * D_GGX(wh, normal, alpha) * dot(wo, wh) / wo.z;
-    return pdf / (4.0f * dot(wo, wh));
+    // dot(wo, wh) cancels out
+    return G1_Smith_GGX(wo, wh, normal, alpha) * D_GGX(wh, normal, alpha) / (4.0f * dot(normal, wo));
 }
 
 } // namespace
@@ -162,10 +162,6 @@ Vec3 Material::sampleDirection(Vec3 wo, Vec3 normal,
     float maxS = maxComponent(Fr_Schlick(normal, wo, kS));
     float Pd = maxD / (maxD + maxS);
     float Ps = maxS / (maxD + maxS);
-
-    OrthonormalBasis basis(normal);
-    wo = basis.worldToLocal(wo);
-    normal = basis.worldToLocal(normal);
 
     Vec3 wi, wh;
     if (u1 < Pd) {
@@ -194,7 +190,7 @@ Vec3 Material::sampleDirection(Vec3 wo, Vec3 normal,
         *pdf = Pd * pdfCosineHemisphere(normal, wi) + Ps * pdfGGXVNDF(normal, wh, wo, alpha);
     }
 
-    return basis.localToWorld(wi);
+    return wi;
 }
 
 float Material::pdf(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {

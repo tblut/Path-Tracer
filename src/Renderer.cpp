@@ -74,18 +74,23 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
     Vec3 wo = normalize(-ray.direction);
     const Material* material = hit.shape->material;
 
+    OrthonormalBasis basis(normal);
+    wo = basis.worldToLocal(wo);
+    normal = basis.worldToLocal(normal);
+
     Vec3 color(0.0f);
     for (auto light : scene.getLights()) {
         float lightPdf;
-        Vec3 wi = light->sampleDirection(intersectionPoint,
+        Vec3 lightDir = light->sampleDirection(intersectionPoint,
             rng.uniformFloat(), rng.uniformFloat(), &lightPdf);
+        Vec3 wi = basis.worldToLocal(lightDir);
 
-        float cosTheta = dot(wi, hit.normal);
-        if (cosTheta <= 0.0f) {
+        float dotNL = cosTheta(wi);
+        if (dotNL <= 0.0f) {
             continue;
         }
 
-        RayHit lightHit = scene.intersect(Ray(intersectionPoint, wi));
+        RayHit lightHit = scene.intersect(Ray(intersectionPoint, lightDir));
         if (lightHit.shape != light || lightHit.shape == hit.shape) {
             continue;
         }
@@ -95,19 +100,19 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
         // TODO: Multiple importance sampling
 
         assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
-        color += lambda * light->material->emittance * brdf * cosTheta / lightPdf;
+        color += lambda * light->material->emittance * brdf * dotNL / lightPdf;
     }
 
     float pdf;
     Vec3 wi = material->sampleDirection(wo, normal, rng.uniformFloat(), rng.uniformFloat(), &pdf);
-    float cosTheta = dot(normal, wi);
-    if (cosTheta <= 0.0f) {
+    float dotNL = cosTheta(wi);
+    if (dotNL <= 0.0f) {
         return color;
     }
 
     assert(pdf > 0.0f && !std::isinf(pdf) && !std::isnan(pdf));
     Vec3 brdf = material->evaluate(wi, wo, normal);
-    lambda *= brdf * cosTheta / pdf;
+    lambda *= brdf * dotNL / pdf;
     
     float rrProb = max(lambda.r, max(lambda.g, lambda.b));
     if (depth < minRRDepth_ || rng.uniformFloat() <= rrProb) {
@@ -116,7 +121,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
             lambda /= rrProb;
         }
 
-        Ray newRay(intersectionPoint, wi);
+        Ray newRay(intersectionPoint, basis.localToWorld(wi));
         color += lambda * radiance(scene, rng, newRay, lambda, depth + 1);
     }
 
