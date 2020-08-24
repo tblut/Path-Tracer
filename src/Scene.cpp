@@ -13,6 +13,8 @@ RayHit Scene::intersect(const Ray& ray) const {
         }
     }
 
+    // TODO: Deferre normal computation until here
+
     return closestHit;
 }
 

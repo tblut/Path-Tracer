@@ -5,7 +5,7 @@
 #include "Vector3.h"
 #include "Ray.h"
 
-namespace pt{
+namespace pt {
 
 class Sphere : public Shape {
 public:
@@ -19,6 +19,7 @@ public:
 private:
     Vec3 center_;
     float radius_;
+    float radiusSq_;
 };
 
 } // namespace pt
