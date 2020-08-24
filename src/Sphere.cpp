@@ -30,13 +30,13 @@ Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) cons
     Vec3 w = center_ - p;
     const float dist = length(w);
     const float cosThetaMax = std::sqrt(1.0f - (radius_ * radius_) / (dist * dist));
-    const float theta = std::acos(1.0f - u1 + u1 * cosThetaMax);
+    const float cosTheta = 1.0f - u1 + u1 * cosThetaMax;
     const float phi = 2.0f * pi<float> * u2;
-    const float sinTheta = std::sin(theta);
-    const Vec3 dir(
-        std::cos(phi) * sinTheta,
-        std::sin(phi) * sinTheta,
-        std::cos(theta)
+    const float sinTheta = std::sqrt(1.0f - cosTheta * cosTheta);
+    Vec3 dir(
+        sinTheta * std::cos(phi),
+        sinTheta * std::sin(phi),
+        cosTheta
     );
     if (pdf) {
         *pdf = 1.0f / (2.0f * pi<float> * (1.0f - cosThetaMax));
@@ -44,7 +44,9 @@ Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) cons
 
     w /= dist;
     OrthonormalBasis basis(w);
-    return normalize(basis.localToWorld(dir));
+    dir = basis.localToWorld(dir);
+    assert(isNormalized(dir));
+    return dir;
 }
 
 float Sphere::pdf(const Vec3& p) const {

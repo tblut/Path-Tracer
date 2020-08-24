@@ -145,21 +145,26 @@ float pdfGGXVNDF(const Vec3& normal, const Vec3& wh, const Vec3& wo, float alpha
 
 namespace pt {
 
-Vec3 Material::evaluate(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {
-    float alpha = roughness * roughness;
-    Vec3 kD = baseColor * (1.0f - metalness);
-    Vec3 kS = lerp(Vec3(0.04f), baseColor, metalness);
-    return diffuse_Lambert(kD) + specular_GGX(normal, wo, wi, kS, alpha);
+Material::Material(const Vec3& baseColor, float roughness,
+        float metalness, const Vec3& emittance)
+    : baseColor_(baseColor)
+    , roughness_(roughness)
+    , metalness_(metalness)
+    , emittance_(emittance)
+{
+    alpha_ = max(0.001f, roughness * roughness);
+    kD_ = baseColor * (1.0f - metalness);
+    kS_ = lerp(Vec3(0.04f), baseColor, metalness);
 }
 
-Vec3 Material::sampleDirection(Vec3 wo, Vec3 normal,
-        float u1, float u2, float* pdf) const {
-    float alpha = roughness * roughness;
-    Vec3 kD = baseColor * (1.0f - metalness);
-    Vec3 kS = lerp(Vec3(0.04f), baseColor, metalness);
+Vec3 Material::evaluate(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {
+    return diffuse_Lambert(kD_) + specular_GGX(normal, wo, wi, kS_, alpha_);
+}
 
-    float maxD = maxComponent(kD);
-    float maxS = maxComponent(Fr_Schlick(normal, wo, kS));
+Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
+        float u1, float u2, float* pdf) const {
+    float maxD = maxComponent(kD_);
+    float maxS = maxComponent(Fr_Schlick(normal, wo, kS_));
     float Pd = maxD / (maxD + maxS);
     float Ps = maxS / (maxD + maxS);
 
@@ -180,31 +185,27 @@ Vec3 Material::sampleDirection(Vec3 wo, Vec3 normal,
             Pd, oneMinusEpsilon<float>,
             0.0f, oneMinusEpsilon<float>);
 
-        wh = sampleGGXVNDF(wo, alpha, u1, u2);
+        wh = sampleGGXVNDF(wo, alpha_, u1, u2);
         assert(isNormalized(wh));
         assert(dot(wh, wo) >= 0.0f);
         wi = normalize(reflect(wo, wh));
     }
 
     if (pdf) {
-        *pdf = Pd * pdfCosineHemisphere(normal, wi) + Ps * pdfGGXVNDF(normal, wh, wo, alpha);
+        *pdf = Pd * pdfCosineHemisphere(normal, wi) + Ps * pdfGGXVNDF(normal, wh, wo, alpha_);
     }
 
     return wi;
 }
 
 float Material::pdf(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {
-    float alpha = roughness * roughness;
-    Vec3 kD = baseColor * (1.0f - metalness);
-    Vec3 kS = lerp(Vec3(0.04f), baseColor, metalness);
-
-    float maxD = maxComponent(kD);
-    float maxS = maxComponent(Fr_Schlick(normal, wo, kS));
+    float maxD = maxComponent(kD_);
+    float maxS = maxComponent(Fr_Schlick(normal, wo, kS_));
     float Pd = maxD / (maxD + maxS);
     float Ps = maxS / (maxD + maxS);
     Vec3 wh = normalize(wi + wo);
 
-    return Pd * pdfCosineHemisphere(normal, wi) + Ps * pdfGGX(normal, wh, wi, alpha);
+    return Pd * pdfCosineHemisphere(normal, wi) + Ps * pdfGGX(normal, wh, wi, alpha_);
 }
 
 } // namespace pt

@@ -66,7 +66,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
         return backgroundColor_ * lambda;
     }
     if (hit.shape->isLight() && depth == 0) {
-        return lambda * hit.shape->material->emittance;
+        return lambda * hit.shape->material->getEmittance();
     }
 
     Vec3 normal = hit.normal;
@@ -100,7 +100,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
         // TODO: Multiple importance sampling
 
         assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
-        color += lambda * light->material->emittance * brdf * dotNL / lightPdf;
+        color += lambda * light->material->getEmittance() * brdf * dotNL / lightPdf;
     }
 
     float pdf;

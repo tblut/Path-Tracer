@@ -16,9 +16,9 @@ public:
     virtual float pdf(const Vec3& p) const = 0;
 
     bool isLight() const {
-        return material->emittance.r > 0.0f
-            || material->emittance.g > 0.0f
-            || material->emittance.b > 0.0f;
+        return material->getEmittance().r > 0.0f
+            || material->getEmittance().g > 0.0f
+            || material->getEmittance().b > 0.0f;
     }
 
     const Material* material;
