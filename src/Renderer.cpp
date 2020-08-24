@@ -6,6 +6,17 @@
 #include "Shape.h"
 #include "OrthonormalBasis.h"
 
+namespace {
+
+float powerHeuristic(int nf, float pdfF, int ng, float pdfG) {
+    float f = nf * pdfF;
+    float g = ng * pdfG;
+    float f2 = f * f;
+    return f2 / (f2 + g * g);
+}
+
+} // namespace
+
 namespace pt {
 
 void Renderer::render(const Scene& scene, const Camera& camera, Film& film) {
@@ -56,7 +67,8 @@ void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
     }
 }
 
-Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, Vec3 lambda, uint32_t depth) {
+Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
+    const Ray& ray, Vec3 lambda, uint32_t depth) const {
     if (depth > maxDepth_) {
         return Vec3(0.0f);
     }
@@ -73,36 +85,58 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, const Ray& ray, V
     Vec3 intersectionPoint = ray.at(hit.t) + hit.normal * 0.001f;
     Vec3 wo = normalize(-ray.direction);
     const Material* material = hit.shape->material;
-
+   
     OrthonormalBasis basis(normal);
     wo = basis.worldToLocal(wo);
     normal = basis.worldToLocal(normal);
 
     Vec3 color(0.0f);
-    for (auto light : scene.getLights()) {
+    { // Direct illuminaton
+        size_t lightIndex = static_cast<size_t>(rng.uniformFloat() * scene.getNumLights());
+        const Shape* light = scene.getLights()[lightIndex];
+
+        // MIS light sampling
         float lightPdf;
         Vec3 lightDir = light->sampleDirection(intersectionPoint,
             rng.uniformFloat(), rng.uniformFloat(), &lightPdf);
         Vec3 wi = basis.worldToLocal(lightDir);
 
         float dotNL = cosTheta(wi);
-        if (dotNL <= 0.0f) {
-            continue;
+        if (dotNL > 0.0f) {
+            RayHit lightHit = scene.intersect(Ray(intersectionPoint, lightDir));
+            if (lightHit.shape == light && lightHit.shape != hit.shape) {
+                Vec3 brdf = material->evaluate(wi, wo, normal);
+                float brdfPdf = material->pdf(wi, wo, normal);
+                float misWeight = powerHeuristic(1, lightPdf, 1, brdfPdf);
+
+                assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
+                assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
+                color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / lightPdf;
+            }
         }
 
-        RayHit lightHit = scene.intersect(Ray(intersectionPoint, lightDir));
-        if (lightHit.shape != light || lightHit.shape == hit.shape) {
-            continue;
+        // MIS brdf sampling
+        float brdfPdf;
+        wi = material->sampleDirection(wo, normal, rng.uniformFloat(), rng.uniformFloat(), &brdfPdf);
+        dotNL = cosTheta(wi);
+        if (dotNL > 0.0f) {
+            RayHit lightHit = scene.intersect(Ray(intersectionPoint, basis.localToWorld(wi)));
+            if (lightHit.shape == light && lightHit.shape != hit.shape) {
+                Vec3 brdf = material->evaluate(wi, wo, normal);
+                lightPdf = light->pdf(intersectionPoint);
+                float misWeight = powerHeuristic(1, brdfPdf, 1, lightPdf);
+
+                assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
+                assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
+                color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / brdfPdf;
+            }
         }
 
-        Vec3 brdf = material->evaluate(wi, wo, normal);
-
-        // TODO: Multiple importance sampling
-
-        assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
-        color += lambda * light->material->getEmittance() * brdf * dotNL / lightPdf;
+        float lightProb = 1.0f / scene.getNumLights();
+        color /= lightProb;
     }
 
+    // Indirect Illumination
     float pdf;
     Vec3 wi = material->sampleDirection(wo, normal, rng.uniformFloat(), rng.uniformFloat(), &pdf);
     float dotNL = cosTheta(wi);

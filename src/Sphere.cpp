@@ -28,8 +28,8 @@ RayHit Sphere::intersect(const Ray & ray) const {
 
 Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) const {
     Vec3 w = center_ - p;
-    const float dist = length(w);
-    const float cosThetaMax = std::sqrt(1.0f - (radius_ * radius_) / (dist * dist));
+    const float distSq = lengthSq(w);
+    const float cosThetaMax = std::sqrt(1.0f - (radius_ * radius_) / distSq);
     const float cosTheta = 1.0f - u1 + u1 * cosThetaMax;
     const float phi = 2.0f * pi<float> * u2;
     const float sinTheta = std::sqrt(1.0f - cosTheta * cosTheta);
@@ -42,7 +42,7 @@ Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) cons
         *pdf = 1.0f / (2.0f * pi<float> * (1.0f - cosThetaMax));
     }
 
-    w /= dist;
+    w /= std::sqrt(distSq);
     OrthonormalBasis basis(w);
     dir = basis.localToWorld(dir);
     assert(isNormalized(dir));
@@ -50,8 +50,7 @@ Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) cons
 }
 
 float Sphere::pdf(const Vec3& p) const {
-    const float dist = length(center_ - p);
-    const float cosThetaMax = std::sqrt(1.0f - (radius_ * radius_) / (dist * dist));
+    const float cosThetaMax = std::sqrt(1.0f - (radius_ * radius_) / lengthSq(center_ - p));
     return 1.0f / (2.0f * pi<float> * (1.0f - cosThetaMax));
 }
 

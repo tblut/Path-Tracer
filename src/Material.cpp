@@ -205,7 +205,7 @@ float Material::pdf(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {
     float Ps = maxS / (maxD + maxS);
     Vec3 wh = normalize(wi + wo);
 
-    return Pd * pdfCosineHemisphere(normal, wi) + Ps * pdfGGX(normal, wh, wi, alpha_);
+    return Pd * pdfCosineHemisphere(normal, wi) + Ps * pdfGGXVNDF(normal, wh, wo, alpha_);
 }
 
 } // namespace pt

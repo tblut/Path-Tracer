@@ -18,6 +18,7 @@ public:
     const std::vector<const Shape*>& getLights() const {
         return lights_;
     }
+    size_t getNumLights() const { return lights_.size(); }
 
 private:
     std::vector<const Shape*> shapes_;
