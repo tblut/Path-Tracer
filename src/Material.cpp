@@ -9,7 +9,10 @@ namespace {
 using namespace pt;
 
 Vec3 Fr_Schlick(const Vec3& wh, const Vec3& wi, const Vec3& f0) {
-    return f0 + (Vec3(1.0f) - f0) * std::pow(1.0f - dot(wh, wi), 5);
+    float a = 1.0f - dot(wh, wi);
+    float a2 = a * a;
+    float a5 = a2 * a2 * a;
+    return f0 + (Vec3(1.0f) - f0) * a5;
 }
 
 float D_GGX(const Vec3& wh, const Vec3& normal, float alpha) {
@@ -127,7 +130,7 @@ Vec3 sampleGGXVNDF(const Vec3& wo, float alpha, float u1, float u2) {
     float t1 = r * std::cos(phi);
     float t2 = r * std::sin(phi);
     float s = 0.5f * (1.0f + woHemi.z);
-    t2 = (1.0f - s) * sqrt(1.0f - t1 * t1) + s * t2;
+    t2 = (1.0f - s) * std::sqrt(1.0f - t1 * t1) + s * t2;
 
     // Reprojection onto hemisphere
     Vec3 whHemi = t1 * b1 + t2 * b2 + std::sqrt(max(0.0f, 1.0f - t1 * t1 - t2 * t2)) * woHemi;

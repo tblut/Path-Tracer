@@ -11,7 +11,7 @@ Sphere::Sphere(const Vec3& center, float radius, const Material& material)
 {
 }
 
-RayHit Sphere::intersect(const Ray & ray) const {
+RayHit Sphere::intersect(const Ray& ray) const {
     const float a = dot(ray.direction, ray.direction);
     const Vec3 oc = ray.origin - center_;
     const float b = 2.0f * dot(ray.direction, oc);
