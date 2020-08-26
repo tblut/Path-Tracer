@@ -60,6 +60,9 @@ void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
                     float v = (y + rng.uniformFloat()) / static_cast<float>(film.getHeight() - 1);
                     Ray ray = camera.generateRay(u, v, rng.uniformFloat(), rng.uniformFloat());
                     Vec3 color = radiance(scene, rng, ray, Vec3(1.0f));
+                    assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
+                    assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
+                    assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
                     film.addSample(x, y, color);
                 }
             }
@@ -102,16 +105,17 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
         Vec3 wi = basis.worldToLocal(lightDir);
 
         float dotNL = cosTheta(wi);
-        if (dotNL > 0.0f) {
+        if (dotNL > 0.0f && lightPdf > 0.0f) {
             RayHit lightHit = scene.intersect(Ray(intersectionPoint, lightDir));
             if (lightHit.shape == light && lightHit.shape != hit.shape) {
                 Vec3 brdf = material->evaluate(wi, wo, normal);
                 float brdfPdf = material->pdf(wi, wo, normal);
-                float misWeight = powerHeuristic(1, lightPdf, 1, brdfPdf);
-
-                assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
-                assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
-                color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / lightPdf;
+                if (brdfPdf > 0.0f) {
+                    float misWeight = powerHeuristic(1, lightPdf, 1, brdfPdf);
+                    assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
+                    assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
+                    color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / lightPdf;
+                }
             }
         }
 
@@ -119,16 +123,17 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
         float brdfPdf;
         wi = material->sampleDirection(wo, normal, rng.uniformFloat(), rng.uniformFloat(), &brdfPdf);
         dotNL = cosTheta(wi);
-        if (dotNL > 0.0f) {
+        if (dotNL > 0.0f && brdfPdf > 0.0f) {
             RayHit lightHit = scene.intersect(Ray(intersectionPoint, basis.localToWorld(wi)));
             if (lightHit.shape == light && lightHit.shape != hit.shape) {
                 Vec3 brdf = material->evaluate(wi, wo, normal);
                 lightPdf = light->pdf(intersectionPoint);
-                float misWeight = powerHeuristic(1, brdfPdf, 1, lightPdf);
-
-                assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
-                assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
-                color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / brdfPdf;
+                if (lightPdf > 0.0f) {
+                    float misWeight = powerHeuristic(1, brdfPdf, 1, lightPdf);
+                    assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
+                    assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
+                    color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / brdfPdf;
+                }
             }
         }
 
@@ -140,7 +145,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
     float pdf;
     Vec3 wi = material->sampleDirection(wo, normal, rng.uniformFloat(), rng.uniformFloat(), &pdf);
     float dotNL = cosTheta(wi);
-    if (dotNL <= 0.0f) {
+    if (dotNL <= 0.0f || pdf <= 0.0f) {
         return color;
     }
 
