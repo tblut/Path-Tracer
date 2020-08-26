@@ -7,13 +7,16 @@ namespace pt {
 RayHit Scene::intersect(const Ray& ray) const {
     RayHit closestHit = rayMiss;
     for (const Shape* shape : shapes_) {
-        RayHit hit = shape->intersect(ray);
-        if (hit.t >= 0.0f && (closestHit.t < 0.0f || hit.t < closestHit.t)) {
-            closestHit = hit;
+        float t = shape->intersect(ray);
+        if (t >= 0.0f && (closestHit.t < 0.0f || t < closestHit.t)) {
+            closestHit.t = t;
+            closestHit.shape = shape;
         }
     }
 
-    // TODO: Deferre normal computation until here
+    if (closestHit.shape) {
+        closestHit.normal = closestHit.shape->normalAt(ray.at(closestHit.t));
+    }
 
     return closestHit;
 }

@@ -12,7 +12,8 @@ public:
     Sphere(const Vec3& center, float radius, const Material& material);
     virtual ~Sphere() = default;
 
-    virtual RayHit intersect(const Ray& ray) const override;
+    virtual float intersect(const Ray& ray) const override;
+    virtual Vec3 normalAt(const Vec3& p) const override;
     virtual Vec3 sampleDirection(const Vec3& p, float u1, float u2, float* pdf = nullptr) const override;
     virtual float pdf(const Vec3& p) const override;
 
