@@ -58,7 +58,7 @@ void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
                 for (uint32_t s = 0; s < samplesPerPixel_; s++) {
                     float u = (x + rng.uniformFloat()) / static_cast<float>(film.getWidth() - 1);
                     float v = (y + rng.uniformFloat()) / static_cast<float>(film.getHeight() - 1);
-                    Ray ray = camera.generateRay(u, v);
+                    Ray ray = camera.generateRay(u, v, rng.uniformFloat(), rng.uniformFloat());
                     Vec3 color = radiance(scene, rng, ray, Vec3(1.0f));
                     film.addSample(x, y, color);
                 }
@@ -68,7 +68,7 @@ void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
 }
 
 Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
-    const Ray& ray, Vec3 lambda, uint32_t depth) const {
+        const Ray& ray, Vec3 lambda, uint32_t depth) const {
     if (depth > maxDepth_) {
         return Vec3(0.0f);
     }

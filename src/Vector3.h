@@ -49,15 +49,6 @@ constexpr Vector3<T> max(const Vector3<T>& a, const Vector3<T>& b) {
 }
 
 template <typename T>
-constexpr Vector3<T> clamp(const Vector3<T>& v, T minValue, T maxValue) {
-    return {
-        max(min(v.x, maxValue), minValue),
-        max(min(v.y, maxValue), minValue),
-        max(min(v.z, maxValue), minValue)
-    };
-}
-
-template <typename T>
 constexpr T minComponent(const Vector3<T>& v) {
     return min(v.x, min(v.y, v.z));
 }
@@ -65,6 +56,15 @@ constexpr T minComponent(const Vector3<T>& v) {
 template <typename T>
 constexpr T maxComponent(const Vector3<T>& v) {
     return max(v.x, max(v.y, v.z));
+}
+
+template <typename T>
+constexpr Vector3<T> clamp(const Vector3<T>& v, T minValue, T maxValue) {
+    return {
+        max(min(v.x, maxValue), minValue),
+        max(min(v.y, maxValue), minValue),
+        max(min(v.z, maxValue), minValue)
+    };
 }
 
 template <typename T>
