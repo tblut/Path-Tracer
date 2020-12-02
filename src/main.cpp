@@ -8,6 +8,9 @@
 #include "Ray.h"
 #include "ColorUtils.h"
 
+#include <chrono>
+#include <iostream>
+
 int main(int argc, char** argv) {
     pt::Film film(640, 480);
     pt::Camera camera(
@@ -48,10 +51,13 @@ int main(int argc, char** argv) {
     scene.compile();
 
     pt::Renderer renderer;
-    renderer.setSamplesPerPixel(512);
+    renderer.setSamplesPerPixel(128);
     renderer.setMaxDepth(10);
-    renderer.render(scene, camera, film);
-    film.saveToFile("test.png");
 
+    auto start = std::chrono::high_resolution_clock::now();
+    renderer.render(scene, camera, film);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Render completed in " << (end - start).count() * 1.0e-9 << " sec\n";
+    film.saveToFile("test.png");
     return 0;
 }

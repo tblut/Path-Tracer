@@ -12,19 +12,22 @@ Sphere::Sphere(const Vec3& center, float radius, const Material& material)
 {
 }
 
-RayHit Sphere::intersect(const Ray& ray) const {
+float Sphere::intersect(const Ray& ray) const {
     const float a = dot(ray.direction, ray.direction);
     const Vec3 oc = ray.origin - center_;
     const float halfB = dot(ray.direction, oc);
     const float c = dot(oc, oc) - radiusSq_;
     const float discriminant = halfB * halfB - a * c;
     if (discriminant < 0.0f) {
-        return rayMiss;
+        return -inf<float>;
     }
 
     const float tmin = (-halfB - std::sqrt(discriminant)) / a;
-    const Vec3 normal = normalize(ray.at(tmin) - center_);
-    return RayHit(tmin, normal, this);
+    return tmin;
+}
+
+Vec3 Sphere::normalAt(const Vec3& p) const {
+    return normalize(p - center_);
 }
 
 Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) const {
