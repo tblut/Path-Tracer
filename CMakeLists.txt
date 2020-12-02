@@ -18,3 +18,7 @@ check_ipo_supported(RESULT ipo_result)
 if(ipo_result)
 	set_target_properties(${APP_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
+
+add_library(stb_image_write INTERFACE)
+target_include_directories(stb_image_write INTERFACE ${CMAKE_SOURCE_DIR}/extern/stb/include)
+target_link_libraries(${APP_NAME} PRIVATE stb_image_write)
