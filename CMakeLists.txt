@@ -25,8 +25,9 @@ target_link_libraries(PathTracer PRIVATE PathTracerLib)
 add_library(Catch2 INTERFACE)
 target_include_directories(Catch2 INTERFACE ${CMAKE_SOURCE_DIR}/extern/catch2/include)
 
-add_executable(MathTests tests/MathTests.cpp)
+add_executable(MathTests "tests/MathTests.cpp")
 target_link_libraries(MathTests PRIVATE PathTracerLib Catch2)
+set_property(TARGET MathTests PROPERTY FOLDER "Tests") 
 
 # Enable link time optimizations
 include(CheckIPOSupported)
