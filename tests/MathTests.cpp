@@ -1,82 +1,12 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
+#include "Helpers.h"
 #include "MathUtils.h"
 #include "Vector2.h"
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Matrix4x4.h"
-
-namespace pt {
-    template <typename T> constexpr T testEps = static_cast<T>(0.0000001);
-
-    template <typename T>
-    struct Approx {
-        explicit constexpr Approx(T value_) : value(value_) { }
-
-        friend constexpr bool operator==(T lhs, const Approx& rhs) {
-            return std::abs(lhs - rhs.value) < testEps<T>;
-        }
-
-        friend constexpr bool operator!=(T lhs, const Approx& rhs) {
-            return !(lhs == rhs);
-        }
-
-        T value;
-    };
-
-    template <typename T>
-    struct ApproxVec2 {
-        explicit constexpr ApproxVec2(T x_, T y_) : x(x_), y(y_) { }
-
-        friend constexpr bool operator==(const pt::Vector2<T>& lhs, const ApproxVec2& rhs) {
-            return lhs.x == rhs.x
-                && lhs.y == rhs.y;
-        }
-
-        friend constexpr bool operator!=(const pt::Vector2<T>& lhs, const ApproxVec2& rhs) {
-            return !(lhs == rhs);
-        }
-
-        Approx<T> x, y;
-    };
-
-    template <typename T>
-    struct ApproxVec3 {
-        explicit constexpr ApproxVec3(T x_, T y_, T z_) : x(x_), y(y_), z(z_) { }
-
-        friend constexpr bool operator==(const pt::Vector3<T>& lhs, const ApproxVec3& rhs) {
-            return lhs.x == rhs.x
-                && lhs.y == rhs.y
-                && lhs.z == rhs.z;
-        }
-
-        friend constexpr bool operator!=(const pt::Vector3<T>& lhs, const ApproxVec3& rhs) {
-            return !(lhs == rhs);
-        }
-
-        Approx<T> x, y, z;
-    };
-
-    template <typename T>
-    struct ApproxVec4 {
-        explicit constexpr ApproxVec4(T x_, T y_, T z_, T w_) : x(x_), y(y_), z(z_), w(w_) { }
-
-        friend constexpr bool operator==(const pt::Vector4<T>& lhs, const ApproxVec4& rhs) {
-            return lhs.x == rhs.x
-                && lhs.y == rhs.y
-                && lhs.z == rhs.z
-                && lhs.w == rhs.w;
-        }
-
-        friend constexpr bool operator!=(const pt::Vector4<T>& lhs, const ApproxVec4& rhs) {
-            return !(lhs == rhs);
-        }
-
-        Approx<T> x, y, z, w;
-    };
-}
-
 
 TEST_CASE("Functions") {
     SECTION("min") {
@@ -241,19 +171,20 @@ TEST_CASE("Functions") {
 
 
 TEST_CASE("Vector Operators") {
-    auto v2 = pt::Vec2(4.0f);
     auto a2 = pt::Vec2(1.0f, 2.0f);
     auto b2 = pt::Vec2(3.0f, 5.0f);
 
-    auto v3 = pt::Vec3(4.0f);
     auto a3 = pt::Vec3(1.0f, 2.0f, 3.0f);
     auto b3 = pt::Vec3(3.0f, 5.0f, 7.0f);
 
-    auto v4 = pt::Vec4(4.0f);
     auto a4 = pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f);
     auto b4 = pt::Vec4(5.0f, 7.0f, 9.0f, 11.0f);
 
     SECTION("data members") {
+        auto v2 = pt::Vec2(4.0f);
+        auto v3 = pt::Vec3(4.0f);
+        auto v4 = pt::Vec4(4.0f);
+
         REQUIRE(v2 == pt::ApproxVec2(4.0f, 4.0f));
         REQUIRE(a2 == pt::ApproxVec2(1.0f, 2.0f));
         REQUIRE(a2 == pt::ApproxVec2(a2.r, a2.g));
@@ -440,5 +371,126 @@ TEST_CASE("Vector Functions") {
         REQUIRE(pt::dot(vecA, vecC) == pt::Approx(0.0f));
         REQUIRE(pt::dot(vecB, vecC) == pt::Approx(0.0f));
         REQUIRE(pt::isNormalized(vecC));
+    }
+}
+
+
+TEST_CASE("Matrix Operators & Functions") {
+    auto a = pt::Mat4(
+        1.0f, 2.0f, 3.0f, 4.0f,
+        5.0f, 6.0f, 7.0f, 8.0f,
+        9.0f, 10.0f, 11.0f, 12.0f,
+        13.0f, 14.0f, 15.0f, 16.0f);
+    auto b = pt::Mat4(
+        17.0f, 18.0f, 19.0f, 20.0f,
+        21.0f, 22.0f, 23.0f, 24.0f,
+        25.0f, 26.0f, 27.0f, 28.0f,
+        29.0f, 30.0f, 31.0f, 32.0f);
+
+    SECTION("constructors") {
+        auto diag = pt::Mat4(4.0f);
+        auto rows = pt::Mat4::fromRows(
+            pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f),
+            pt::Vec4(5.0f, 6.0f, 7.0f, 8.0f),
+            pt::Vec4(9.0f, 10.0f, 11.0f, 12.0f),
+            pt::Vec4(13.0f, 14.0f, 15.0f, 16.0f));
+        auto cols = pt::Mat4::fromColumns(
+            pt::Vec4(1.0f, 5.0f, 9.0f, 13.0f),
+            pt::Vec4(2.0f, 6.0f, 10.0f, 14.0f),
+            pt::Vec4(3.0f, 7.0f, 11.0f, 15.0f),
+            pt::Vec4(4.0f, 8.0f, 12.0f, 16.0f));
+
+        REQUIRE(a._11 == pt::Approx(1.0f));
+        REQUIRE(a._12 == pt::Approx(2.0f));
+        REQUIRE(a._13 == pt::Approx(3.0f));
+        REQUIRE(a._14 == pt::Approx(4.0f));
+        REQUIRE(a._21 == pt::Approx(5.0f));
+        REQUIRE(a._22 == pt::Approx(6.0f));
+        REQUIRE(a._23 == pt::Approx(7.0f));
+        REQUIRE(a._24 == pt::Approx(8.0f));
+        REQUIRE(a._31 == pt::Approx(9.0f));
+        REQUIRE(a._32 == pt::Approx(10.0f));
+        REQUIRE(a._33 == pt::Approx(11.0f));
+        REQUIRE(a._34 == pt::Approx(12.0f));
+        REQUIRE(a._41 == pt::Approx(13.0f));
+        REQUIRE(a._42 == pt::Approx(14.0f));
+        REQUIRE(a._43 == pt::Approx(15.0f));
+        REQUIRE(a._44 == pt::Approx(16.0f));
+
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                REQUIRE(a.data[i][j] == pt::Approx(static_cast<float>(j + i * 4 + 1)));
+                REQUIRE(a.data[i][j] == pt::Approx(a[i][j]));
+                REQUIRE(a.rows[i][j] == pt::Approx(a[i][j]));
+                REQUIRE(a[i][j] == pt::Approx(rows[i][j]));
+                REQUIRE(a[i][j] == pt::Approx(cols[i][j]));
+
+                if (i == j) {
+                    REQUIRE(diag[i][j] == pt::Approx(4.0f));
+                }
+                else {
+                    REQUIRE(diag[i][j] == pt::Approx(0.0f));
+                }
+            }
+        }
+    }
+
+    SECTION("mat * mat, mat *= mat") {
+        auto expected = pt::ApproxMat4(
+            250.0f, 260.0f, 270.0f, 280.0f,
+            618.0f, 644.0f, 670.0f, 696.f,
+            986.0f, 1028.0f, 1070.0f, 1112.0f,
+            1354.0f, 1412.0f, 1470.0f, 1528.0f);
+        REQUIRE(a * b == expected);
+
+        pt::Mat4& c = (a *= b);
+        REQUIRE(a == expected);
+        REQUIRE(&a == &c);
+    }
+
+    SECTION("mat * scalar, scalar * mat, mat *= scalar") {
+        auto expected = pt::ApproxMat4(
+            2.0f, 4.0f, 6.0f, 8.0f,
+            10.0f, 12.0f, 14.0f, 16.f,
+            18.0f, 20.0f, 22.0f, 24.0f,
+            26.0f, 28.0f, 30.0f, 32.0f);
+        REQUIRE(a * 2.0f == expected);
+        REQUIRE(2.0f * a == expected);
+
+        pt::Mat4& c = (a *= 2.0f);
+        REQUIRE(a == expected);
+        REQUIRE(&a == &c);
+    }
+
+    SECTION("transpose") {
+        auto expected = pt::ApproxMat4(
+            1.0f, 5.0f, 9.0f, 13.0f,
+            2.0f, 6.0f, 10.0f, 14.0f,
+            3.0f, 7.0f, 11.0f, 15.0f,
+            4.0f, 8.0f, 12.0f, 16.0f);
+        REQUIRE(pt::transpose(a) == expected);
+    }
+
+    SECTION("transformPoint3x4") {
+        auto expected = pt::ApproxVec3(138.0f, 394.0f, 650.0f);
+        REQUIRE(pt::transformPoint3x4(a, pt::Vec3(17.0f, 21.0f, 25.0f)) == expected);
+    }
+
+    SECTION("transformVector3x4") {
+        auto expected = pt::ApproxVec3(134.0f, 386.0f, 638.0f);
+        REQUIRE(pt::transformVector3x4(a, pt::Vec3(17.0f, 21.0f, 25.0f)) == expected);
+    }
+
+    SECTION("lookAt") {
+        auto expected = pt::ApproxMat4(
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+        auto result = pt::lookAt(
+            pt::Vec3(0.0f, 0.0f, 0.0f),
+            pt::Vec3(0.0f, 0.0f, -1.0f),
+            pt::Vec3(0.0f, 1.0f, 0.0f));
+        REQUIRE(result == expected);
     }
 }
