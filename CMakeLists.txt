@@ -27,7 +27,11 @@ target_include_directories(Catch2 INTERFACE ${CMAKE_SOURCE_DIR}/extern/catch2/in
 
 add_executable(MathTests "tests/MathTests.cpp")
 target_link_libraries(MathTests PRIVATE PathTracerLib Catch2)
-set_property(TARGET MathTests PROPERTY FOLDER "Tests") 
+set_property(TARGET MathTests PROPERTY FOLDER "Tests")
+
+add_executable(SamplingTests "tests/SamplingTests.cpp")
+target_link_libraries(SamplingTests PRIVATE PathTracerLib Catch2)
+set_property(TARGET SamplingTests PROPERTY FOLDER "Tests")
 
 # Enable link time optimizations
 include(CheckIPOSupported)
@@ -39,4 +43,6 @@ if(ipo_result)
 	set_target_properties(PathTracer PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
 	set_target_properties(MathTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 	set_target_properties(MathTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+	set_target_properties(SamplingTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+	set_target_properties(SamplingTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
 endif()

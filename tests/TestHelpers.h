@@ -6,28 +6,48 @@
 #include "Vector4.h"
 #include "Matrix4x4.h"
 
+#include <ostream>
+#include <cmath>
+
 namespace pt {
 
-template <typename T> constexpr T testEps = static_cast<T>(1e-6);
+template <typename T>
+constexpr T testEps = static_cast<T>(1e-8);
 
 template <typename T>
 struct Approx {
-    explicit constexpr Approx(T value_) : value(value_) { }
+    explicit constexpr Approx(T value_) : value(value_), eps(testEps<T>) { }
+
+    Approx& epsilon(T eps_) {
+        eps = eps_;
+        return *this;
+    }
 
     friend constexpr bool operator==(T lhs, const Approx& rhs) {
-        return std::abs(lhs - rhs.value) < testEps<T>;
+        return std::abs(lhs - rhs.value) < rhs.eps;
     }
 
     friend constexpr bool operator!=(T lhs, const Approx& rhs) {
         return !(lhs == rhs);
     }
 
+    friend std::ostream& operator<<(std::ostream& o, const Approx& v) {
+        return o << "Approx(" << v.value << ")";
+    }
+
     T value;
+    T eps;
 };
 
 template <typename T>
 struct ApproxVec2 {
     explicit constexpr ApproxVec2(T x_, T y_) : x(x_), y(y_) { }
+
+    ApproxVec2& epsilon(T eps_) {
+        x.epsilon(eps_);
+        y.epsilon(eps_);
+        return *this;
+    }
 
     friend constexpr bool operator==(const pt::Vector2<T>& lhs, const ApproxVec2& rhs) {
         return lhs.x == rhs.x
@@ -38,12 +58,23 @@ struct ApproxVec2 {
         return !(lhs == rhs);
     }
 
+    friend std::ostream& operator<<(std::ostream& o, const ApproxVec2& v) {
+        return o << "ApproxVec2(" << v.x.value << ", " << v.y.value << ")";
+    }
+
     Approx<T> x, y;
 };
 
 template <typename T>
 struct ApproxVec3 {
     explicit constexpr ApproxVec3(T x_, T y_, T z_) : x(x_), y(y_), z(z_) { }
+
+    ApproxVec3& epsilon(T eps_) {
+        x.epsilon(eps_);
+        y.epsilon(eps_);
+        z.epsilon(eps_);
+        return *this;
+    }
 
     friend constexpr bool operator==(const pt::Vector3<T>& lhs, const ApproxVec3& rhs) {
         return lhs.x == rhs.x
@@ -55,12 +86,24 @@ struct ApproxVec3 {
         return !(lhs == rhs);
     }
 
+    friend std::ostream& operator<<(std::ostream& o, const ApproxVec3& v) {
+        return o << "ApproxVec3(" << v.x.value << ", " << v.y.value << ", " << v.z.value << ")";
+    }
+
     Approx<T> x, y, z;
 };
 
 template <typename T>
 struct ApproxVec4 {
     explicit constexpr ApproxVec4(T x_, T y_, T z_, T w_) : x(x_), y(y_), z(z_), w(w_) { }
+
+    ApproxVec4& epsilon(T eps_) {
+        x.epsilon(eps_);
+        y.epsilon(eps_);
+        z.epsilon(eps_);
+        w.epsilon(eps_);
+        return *this;
+    }
 
     friend constexpr bool operator==(const pt::Vector4<T>& lhs, const ApproxVec4& rhs) {
         return lhs.x == rhs.x
@@ -71,6 +114,10 @@ struct ApproxVec4 {
 
     friend constexpr bool operator!=(const pt::Vector4<T>& lhs, const ApproxVec4& rhs) {
         return !(lhs == rhs);
+    }
+
+    friend std::ostream& operator<<(std::ostream& o, const ApproxVec4& v) {
+        return o << "ApproxVec4(" << v.x.value << ", " << v.y.value << ", " << v.z.value << ", " << v.w.value << ")";
     }
 
     Approx<T> x, y, z, w;
@@ -106,5 +153,42 @@ struct ApproxMat4 {
     Approx<T> _31, _32, _33, _34;
     Approx<T> _41, _42, _43, _44;
 };
+
+inline double incompleteLowerGamma(double s, double z) {
+    double x = std::pow(z, s) * std::exp(-z) * (1.0 / s);
+    double nominator = 1.0;
+    double denomiator = 1.0;
+    double sum = 1.0;
+
+    for (int i = 1; ; i++) {
+        nominator *= z;
+        denomiator *= (s + i);
+        sum += nominator / denomiator;
+
+        // Test if machine epsilon precision has been reached
+        if (sum == sum + (nominator / denomiator)) {
+            break;
+        }
+    }
+
+    return x * sum;
+}
+
+
+inline double chi2cdf(int k, double x) {
+    if (k < 1 || x < 0.0) {
+        return 0.0;
+    }
+    else if (k == 2) {
+        return 1.0 - std::exp(-x / 2.0);
+    }
+
+    double lowerGamma = incompleteLowerGamma(k / 2.0, x / 2.0);
+    if (std::isnan(lowerGamma) || std::isinf(lowerGamma)) {
+        return 1.0 - std::numeric_limits<double>::epsilon();
+    }
+
+    return lowerGamma / std::tgamma(k / 2.0);
+}
 
 } // namespace pt

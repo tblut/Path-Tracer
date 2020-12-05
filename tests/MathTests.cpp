@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
-#include "Helpers.h"
+#include "TestHelpers.h"
 #include "MathUtils.h"
 #include "Vector2.h"
 #include "Vector3.h"
@@ -400,8 +400,8 @@ TEST_CASE("Vector Functions") {
         float angleOfRefraction = std::acos(pt::abs(pt::dot(wt, normal)));
         float expectedAngleOfIncidence = static_cast<float>(pt::radians(45.0));
         float expectedAngleOfRefraction = static_cast<float>(pt::radians(70.4883056));
-        REQUIRE(angleOfIncidence == pt::Approx(expectedAngleOfIncidence));
-        REQUIRE(angleOfRefraction == pt::Approx(expectedAngleOfRefraction));
+        REQUIRE(angleOfIncidence == pt::Approx(expectedAngleOfIncidence).epsilon(1e-5f));
+        REQUIRE(angleOfRefraction == pt::Approx(expectedAngleOfRefraction).epsilon(1e-5f));
         REQUIRE_FALSE(tir);
         REQUIRE(pt::dot(wt, normal) < 0.0f);
 
