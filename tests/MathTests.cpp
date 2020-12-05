@@ -372,6 +372,50 @@ TEST_CASE("Vector Functions") {
         REQUIRE(pt::dot(vecB, vecC) == pt::Approx(0.0f));
         REQUIRE(pt::isNormalized(vecC));
     }
+
+    SECTION("reflect") {
+        auto normal = pt::Vec3(0.0f, 1.0f, 0.0f);
+        auto wo = pt::Vec3(-1.0f, 1.0f, 0.0f);
+        auto wi = pt::reflect(wo, normal);
+        REQUIRE(wi == pt::ApproxVec3(1.0f, 1.0f, 0.0f));
+        REQUIRE(pt::dot(wi, normal) == pt::Approx(pt::dot(wo, normal)));
+
+        wo = pt::normalize(wo);
+        wi = pt::reflect(wo, normal);
+        REQUIRE(wi == pt::ApproxVec3(0.7071067811865f, 0.7071067811865f, 0.0f));
+        REQUIRE(pt::dot(wi, normal) == pt::Approx(pt::dot(wo, normal)));
+        REQUIRE(pt::isNormalized(wi));
+    }
+
+    SECTION("refract") {
+        auto normal = pt::Vec3(0.0f, 1.0f, 0.0f);
+        auto wi = pt::normalize(pt::Vec3(-1.0f, 1.0f, 0.0f));
+        float etaI = 1.333f; // Water
+        float etaT = 1.0f; // Air
+        float eta = etaI / etaT;
+        pt::Vec3 wt;
+        bool tir = !pt::refract(wi, normal, eta, wt);
+
+        float angleOfIncidence = std::acos(pt::abs(pt::dot(wi, normal)));
+        float angleOfRefraction = std::acos(pt::abs(pt::dot(wt, normal)));
+        float expectedAngleOfIncidence = static_cast<float>(pt::radians(45.0));
+        float expectedAngleOfRefraction = static_cast<float>(pt::radians(70.4883056));
+        REQUIRE(angleOfIncidence == pt::Approx(expectedAngleOfIncidence));
+        REQUIRE(angleOfRefraction == pt::Approx(expectedAngleOfRefraction));
+        REQUIRE_FALSE(tir);
+        REQUIRE(pt::dot(wt, normal) < 0.0f);
+
+        float expectedCriticalAngle = static_cast<float>(pt::radians(90.0 - 48.6066264));
+        wi.x = -std::cos(expectedCriticalAngle + pt::testEps<float>);
+        wi.y = std::sin(expectedCriticalAngle + pt::testEps<float>);
+        tir = !pt::refract(wi, normal, eta, wt);
+        REQUIRE_FALSE(tir);
+
+        wi.x = -std::cos(expectedCriticalAngle - pt::testEps<float>);
+        wi.y = std::sin(expectedCriticalAngle - pt::testEps<float>);
+        tir = !pt::refract(wi, normal, eta, wt);
+        REQUIRE(tir);
+    }
 }
 
 

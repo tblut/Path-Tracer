@@ -127,17 +127,21 @@ constexpr Vector3<T> cross(const Vector3<T>& a, const Vector3<T>& b) {
 }
 
 template <typename T>
-constexpr Vector3<T> reflect(const Vector3<T>& i, const Vector3<T>& n) {
-    return static_cast<T>(2) * dot(i, n) * n - i;
+constexpr Vector3<T> reflect(const Vector3<T>& w, const Vector3<T>& n) {
+    return static_cast<T>(2) * dot(w, n) * n - w;
 }
 
 template <typename T>
-constexpr Vector3<T> refract(const Vector3<T>& i, const Vector3<T>& n, T iof) {
-    const T dotNI = dot(n, i);
-    const T k = static_cast<T>(1) - iof * iof * (static_cast<T>(1) - dotNI * dotNI);
-    return k < static_cast<T>(0)
-        ? Vector3<T>(static_cast<T>(0))
-        : iof * i - (iof * dotNI + std::sqrt(k)) * n;
+inline bool refract(const Vector3<T>& wi, const Vector3<T>& n, T eta, Vector3<T>& wt) {
+    T cosThetaI = dot(n, wi);
+    T sin2ThetaI = max(static_cast<T>(0), static_cast<T>(1) - cosThetaI * cosThetaI);
+    T sin2ThetaT = eta * eta * sin2ThetaI;
+    if (sin2ThetaT >= static_cast<T>(1)) {
+        return false;
+    }
+    T cosThetaT = std::sqrt(static_cast<T>(1) - sin2ThetaT);
+    wt = eta * -wi + (eta * cosThetaI - cosThetaT) * n;
+    return true;
 }
 
 using Vec3 = Vector3<float>;
