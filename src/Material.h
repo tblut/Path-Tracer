@@ -32,9 +32,4 @@ private:
     Vec3 kS_;
 };
 
-// All shading is done in local space where: X=(1,0,0), Y=(0,1,0), Z=(0,0,1)
-inline float cosTheta(const Vec3& w) {
-    return w.z;
-}
-
 } // namespace pt

@@ -5,6 +5,7 @@
 #include "Material.h"
 #include "Shape.h"
 #include "OrthonormalBasis.h"
+#include "BSDF.h"
 
 namespace {
 

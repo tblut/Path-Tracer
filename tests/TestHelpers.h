@@ -6,6 +6,7 @@
 #include "Vector4.h"
 #include "Matrix4x4.h"
 
+#include <functional>
 #include <ostream>
 #include <cmath>
 
@@ -189,6 +190,55 @@ inline double chi2cdf(int k, double x) {
     }
 
     return lowerGamma / std::tgamma(k / 2.0);
+}
+
+// See: https://en.wikipedia.org/wiki/Adaptive_Simpson%27s_method
+template <typename T, typename F>
+T adaptiveSimpson1D(F f, T a, T b, T eps = static_cast<T>(1e-6), int maxDepth = 6) {
+    std::function<T(T, T, T, T, T, T, T, int)> integrate =
+        [&](T a, T b, T eps, T whole, T fa, T fb, T fm, int depth) {
+        T m = (a + b) / 2;
+        T h = (b - a) / 2;
+        T lm = (a + m) / 2;
+        T rm = (m + b) / 2;
+
+        if (eps / 2 == eps || a == lm) {
+            return whole;
+        }
+
+        T flm = f(lm);
+        T frm = f(rm);
+        T left = (h / 6) * (fa + 4 * flm + fm);
+        T right = (h / 6) * (fm + 4 * frm + fb);
+        T delta = left + right - whole;
+
+        if (depth <= 0 || abs(delta) <= 15 * eps) {
+            return left + right + delta / 15;
+        }
+
+        return integrate(a, m, eps / 2, left, fa, fm, flm, depth - 1)
+            + integrate(m, b, eps / 2, right, fm, fb, frm, depth - 1);
+    };
+
+    T h = b - a;
+    if (h == 0) {
+        return 0;
+    }
+
+    T fa = f(a);
+    T fb = f(b);
+    T fm = f((a + b) / 2);
+    T s = (h / 6) * (fa + 4 * fm + fb);
+    return integrate(a, b, eps, s, fa, fb, fm, maxDepth);
+}
+
+template <typename T, typename F>
+T adaptiveSimpson2D(F f, T x0, T x1, T y0, T y1, T eps = static_cast<T>(1e-6), int maxDepth = 6) {
+    auto integrate = [&](T y) {
+        return adaptiveSimpson1D([&](T x) { return f(x, y); }, x0, x1, eps, maxDepth);
+    };
+
+    return adaptiveSimpson1D(integrate, y0, y1, eps, maxDepth);
 }
 
 } // namespace pt
