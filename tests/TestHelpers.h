@@ -13,7 +13,7 @@
 namespace pt {
 
 template <typename T>
-constexpr T testEps = static_cast<T>(1e-8);
+constexpr T testEps = static_cast<T>(1e-6);
 
 template <typename T>
 struct Approx {

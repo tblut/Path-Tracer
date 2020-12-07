@@ -2,6 +2,7 @@
 
 #include "MathUtils.h"
 
+#include <ostream>
 #include <cmath>
 
 namespace pt {
@@ -37,6 +38,11 @@ template <typename T> constexpr Vector4<T> operator*(const Vector4<T>& a, T b) {
 template <typename T> constexpr Vector4<T> operator*(T a, const Vector4<T>& b) { return b * a; }
 template <typename T> constexpr Vector4<T> operator/(const Vector4<T>& a, const Vector4<T>& b) { return { a.x / b.x, a.y / b.y, a.z / b.z, a.w / b.w }; }
 template <typename T> constexpr Vector4<T> operator/(const Vector4<T>& a, T b) { return { a.x / b, a.y / b, a.z / b, a.w / b }; }
+
+template <typename T>
+std::ostream& operator<<(std::ostream& o, const Vector4<T>& v) {
+    return o << "Vec4(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+}
 
 template <typename T>
 constexpr Vector4<T> min(const Vector4<T>& a, const Vector4<T>& b) {

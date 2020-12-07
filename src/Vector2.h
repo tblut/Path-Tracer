@@ -2,6 +2,7 @@
 
 #include "MathUtils.h"
 
+#include <ostream>
 #include <cmath>
 
 namespace pt {
@@ -14,6 +15,10 @@ struct Vector2 {
 
     constexpr T& operator[](unsigned int index) { return data[index]; }
     constexpr T operator[](unsigned int index) const { return data[index]; }
+
+    static Vector2<T> fromSpherical(T phi) {
+        return { std::cos(phi), std::sin(phi) };
+    }
 
     union {
         struct { T x, y; };
@@ -37,6 +42,11 @@ template <typename T> constexpr Vector2<T> operator*(const Vector2<T>& a, T b) {
 template <typename T> constexpr Vector2<T> operator*(T a, const Vector2<T>& b) { return b * a; }
 template <typename T> constexpr Vector2<T> operator/(const Vector2<T>& a, const Vector2<T>& b) { return { a.x / b.x, a.y / b.y }; }
 template <typename T> constexpr Vector2<T> operator/(const Vector2<T>& a, T b) { return { a.x / b, a.y / b }; }
+
+template <typename T>
+std::ostream& operator<<(std::ostream& o, const Vector2<T>& v) {
+    return o << "Vec2(" << v.x << ", " << v.y << ")";
+}
 
 template <typename T>
 constexpr Vector2<T> min(const Vector2<T>& a, const Vector2<T>& b) {

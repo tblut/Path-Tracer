@@ -2,6 +2,7 @@
 
 #include "MathUtils.h"
 
+#include <ostream>
 #include <cmath>
 
 namespace pt {
@@ -14,6 +15,15 @@ struct Vector3 {
 
     constexpr T& operator[](unsigned int index) { return data[index]; }
     constexpr T operator[](unsigned int index) const { return data[index]; }
+
+    static Vector3<T> fromSpherical(T theta, T phi) {
+        T sinTheta = std::sin(theta);
+        return {
+            sinTheta * std::cos(phi),
+            sinTheta * std::sin(phi),
+            std::cos(theta)
+        };
+    }
 
     union {
         struct { T x, y, z; };
@@ -37,6 +47,11 @@ template <typename T> constexpr Vector3<T> operator*(const Vector3<T>& a, T b) {
 template <typename T> constexpr Vector3<T> operator*(T a, const Vector3<T>& b) { return b * a; }
 template <typename T> constexpr Vector3<T> operator/(const Vector3<T>& a, const Vector3<T>& b) { return { a.x / b.x, a.y / b.y, a.z / b.z }; }
 template <typename T> constexpr Vector3<T> operator/(const Vector3<T>& a, T b) { return { a.x / b, a.y / b, a.z / b }; }
+
+template <typename T>
+std::ostream& operator<<(std::ostream& o, const Vector3<T>& v) {
+    return o << "Vec3(" << v.x << ", " << v.y << ", " << v.z << ")";
+}
 
 template <typename T>
 constexpr Vector3<T> min(const Vector3<T>& a, const Vector3<T>& b) {

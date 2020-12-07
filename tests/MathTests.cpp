@@ -204,6 +204,14 @@ TEST_CASE("Vector Operators") {
         REQUIRE(a4 == pt::ApproxVec4(a4[0], a4[1], a4[2], a4[3]));
     }
 
+    SECTION("fromSpherical") {
+        REQUIRE(pt::Vec2::fromSpherical(0.0f) == pt::ApproxVec2(1.0f, 0.0f));
+        REQUIRE(pt::Vec2::fromSpherical(pt::pi<float> / 2.0f) == pt::ApproxVec2(0.0f, 1.0f));
+        REQUIRE(pt::Vec3::fromSpherical(0.0f, 0.0f) == pt::ApproxVec3(0.0f, 0.0f, 1.0f));
+        REQUIRE(pt::Vec3::fromSpherical(pt::pi<float> / 2.0f, 0.0f) == pt::ApproxVec3(1.0f, 0.0f, 0.0f));
+        REQUIRE(pt::Vec3::fromSpherical(pt::pi<float> / 2.0f, pt::pi<float> / 2.0f) == pt::ApproxVec3(0.0f, 1.0f, 0.0f));
+    }
+
     SECTION("vec += vec") {
         pt::Vec2& c2 = (a2 += b2);
         REQUIRE(a2 == pt::ApproxVec2(4.0f, 7.0f));
