@@ -135,7 +135,7 @@ TEST_CASE("Othonormal Basis Change of Basis") {
 
 TEST_CASE("GGX Normal Distribution (D Term)") {
     for (int i = 0; i < 20; i++) {
-        float alpha = 0.01f + (i / 20.0f) * (1.0f - 0.001f);
+        float alpha = 0.01f + (i / 20.0f) * (1.0f - 0.01f);
 
         float integral = pt::adaptiveSimpson2D([&](float theta, float phi) {
             pt::Vec3 wh = pt::Vec3::fromSpherical(theta, phi);
@@ -160,7 +160,7 @@ TEST_CASE("Cosine-weighted Sampling") {
 
 TEST_CASE("GGX Sampling") {
     for (int i = 0; i < 20; i++) {
-        float alpha = 0.3f + (i / 20.0f) * (1.0f - 0.3f);
+        float alpha = 0.01f + (i / 20.0f) * (1.0f - 0.01f);
         testBxdfGoodnessOfFit(
             [&](const pt::Vec3& wi, const pt::Vec3& wo) {
                 return pt::pdfGGX(wi, wo, alpha);
@@ -179,10 +179,10 @@ TEST_CASE("GGX VNDF Sampling") {
         testBxdfGoodnessOfFit(
             [&](const pt::Vec3& wi, const pt::Vec3& wo) {
                 pt::Vec3 wh = pt::normalize(wi + wo);
-                return pt::pdfGGXVNDF(wi, wo, alpha);
+                return pt::pdfGGX_VNDF(wi, wo, alpha);
             },
             [&](const pt::Vec3& wo, float u1, float u2) {
-                pt::Vec3 wh = pt::sampleGGXVNDF(wo, alpha, u1, u2);
+                pt::Vec3 wh = pt::sampleGGX_VNDF(wo, alpha, u1, u2);
                 return pt::reflect(wo, wh);
             });
     }

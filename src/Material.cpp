@@ -46,7 +46,7 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
             Pd, oneMinusEpsilon<float>,
             0.0f, oneMinusEpsilon<float>);
 
-        Vec3 wh = sampleGGXVNDF(wo, alpha_, u1, u2);
+        Vec3 wh = sampleGGX_VNDF(wo, alpha_, u1, u2);
         wi = reflect(wo, wh);
         assert(isNormalized(wh));
         assert(isNormalized(wi));
@@ -54,7 +54,7 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
     }
 
     if (pdf) {
-        *pdf = Pd * pdfCosineHemisphere(wi, wo) + Ps * pdfGGXVNDF(wi, wo, alpha_);
+        *pdf = Pd * pdfCosineHemisphere(wi, wo) + Ps * pdfGGX_VNDF(wi, wo, alpha_);
     }
 
     return wi;
@@ -66,7 +66,7 @@ float Material::pdf(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {
     float Pd = maxD / (maxD + maxS);
     float Ps = maxS / (maxD + maxS);
 
-    return Pd * pdfCosineHemisphere(wi, wo) + Ps * pdfGGXVNDF(wi, wo, alpha_);
+    return Pd * pdfCosineHemisphere(wi, wo) + Ps * pdfGGX_VNDF(wi, wo, alpha_);
 }
 
 } // namespace pt
