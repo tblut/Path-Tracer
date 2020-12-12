@@ -22,24 +22,35 @@ add_executable(PathTracer src/main.cpp)
 target_link_libraries(PathTracer PRIVATE PathTracerLib)
 
 # Unit tests
+enable_testing()
+
 add_library(Catch2 INTERFACE)
 target_include_directories(Catch2 INTERFACE ${CMAKE_SOURCE_DIR}/extern/catch2/include)
 
 add_executable(MathTests "tests/MathTests.cpp")
 target_link_libraries(MathTests PRIVATE PathTracerLib Catch2)
 set_target_properties(MathTests PROPERTIES FOLDER "Tests")
+add_test(math MathTests)
 
 add_executable(RngTests "tests/RngTests.cpp")
 target_link_libraries(RngTests PRIVATE PathTracerLib Catch2)
 set_target_properties(RngTests PROPERTIES FOLDER "Tests")
+add_test(rng RngTests)
 
 add_executable(BxdfTests "tests/BxdfTests.cpp")
 target_link_libraries(BxdfTests PRIVATE PathTracerLib Catch2)
 set_target_properties(BxdfTests PROPERTIES FOLDER "Tests")
+add_test(bxdf BxdfTests)
+
+add_executable(ShapeTests "tests/ShapeTests.cpp")
+target_link_libraries(ShapeTests PRIVATE PathTracerLib Catch2)
+set_target_properties(ShapeTests PROPERTIES FOLDER "Tests")
+add_test(shape ShapeTests)
 
 add_executable(HelperTests "tests/HelperTests.cpp")
 target_link_libraries(HelperTests PRIVATE PathTracerLib Catch2)
 set_target_properties(HelperTests PROPERTIES FOLDER "Tests")
+add_test(helper HelperTests)
 
 # Enable link time optimizations
 include(CheckIPOSupported)
@@ -55,6 +66,8 @@ if(ipo_result)
 	set_target_properties(RngTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
 	set_target_properties(BxdfTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 	set_target_properties(BxdfTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+	set_target_properties(ShapeTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+	set_target_properties(ShapeTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
 	set_target_properties(HelperTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 	set_target_properties(HelperTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
 endif()
