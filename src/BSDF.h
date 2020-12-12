@@ -10,6 +10,11 @@ inline float cosTheta(const Vec3& w) {
     return w.z;
 }
 
+inline bool sameHemisphere(const Vec3& w, const Vec3& wp) {
+    return w.z * wp.z > 0.0f;
+}
+
+
 inline Vec3 Fr_Schlick(const Vec3& wh, const Vec3& wi, const Vec3& f0) {
     float a = 1.0f - dot(wh, wi);
     float a2 = a * a;
@@ -95,23 +100,27 @@ inline Vec3 sampleCosineHemisphere(float u1, float u2) {
     return Vec3(r * std::sin(phi), r * std::cos(phi), std::sqrt(1.0f - u1));
 }
 
-inline float pdfCosineHemisphere(const Vec3& wi) {
-    return cosTheta(wi) / pi<float>;
+inline float pdfCosineHemisphere(const Vec3& wi, const Vec3& wo) {
+    return sameHemisphere(wi, wo) ? cosTheta(wi) / pi<float> : 0.0f;
 }
 
 inline Vec3 sampleGGX(float alpha, float u1, float u2) {
     float phi = 2.0f * pi<float> *u1;
-    float theta = std::acos(std::sqrt((1.0f - u2) / ((alpha * alpha - 1.0f) * u2 + 1.0f)));
-
-    float x = std::sin(theta) * std::cos(phi);
-    float y = std::sin(theta) * std::sin(phi);
-    float z = std::cos(theta);
-
-    return Vec3(x, y, z);
+    float cosTheta = std::sqrt((1.0f - u2) / ((alpha * alpha - 1.0f) * u2 + 1.0f));
+    float sinTheta = std::sqrt(1.0f - cosTheta * cosTheta);
+    Vec3 wh(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
+    return wh;
 }
 
-inline float pdfGGX(const Vec3& wh, const Vec3& wo, float alpha) {
-    return D_GGX(wh, alpha) * cosTheta(wh) / (4.0f * dot(wo, wh));
+inline float pdfGGX(const Vec3& wi, const Vec3& wo, float alpha) {
+    if (!sameHemisphere(wi, wo)) {
+        return 0.0f;
+    }
+
+    Vec3 wh = normalize(wi + wo);
+    float pdf_h = D_GGX(wh, alpha) * abs(cosTheta(wh));
+    float dwh_dwi = 4.0f * dot(wo, wh);
+    return pdf_h / dwh_dwi;
 }
 
 // See: http://jcgt.org/published/0007/04/01/paper.pdf
@@ -128,7 +137,7 @@ inline Vec3 sampleGGXVNDF(const Vec3& wo, float alpha, float u1, float u2) {
 
     // Parameterization of projected area
     float r = std::sqrt(u1);
-    float phi = 2.0f * pi<float> *u2;
+    float phi = 2.0f * pi<float> * u2;
     float t1 = r * std::cos(phi);
     float t2 = r * std::sin(phi);
     float s = 0.5f * (1.0f + woHemi.z);
@@ -141,9 +150,16 @@ inline Vec3 sampleGGXVNDF(const Vec3& wo, float alpha, float u1, float u2) {
     return normalize(Vec3(alpha * whHemi.x, alpha * whHemi.y, max(0.0f, whHemi.z)));
 }
 
-inline float pdfGGXVNDF(const Vec3& wh, const Vec3& wo, float alpha) {
-    // dot(wo, wh) cancels out
-    return G1_Smith_GGX(wo, wh, alpha) * D_GGX(wh, alpha) / (4.0f * cosTheta(wo));
+inline float pdfGGXVNDF(const Vec3& wi, const Vec3& wo, float alpha) {
+    if (!sameHemisphere(wi, wo)) {
+        return 0.0f;
+    }
+
+    Vec3 wh = normalize(wi + wo);
+    float dotHO = dot(wh, wo);
+    float pdf_h = G1_Smith_GGX(wo, wh, alpha) * D_GGX(wh, alpha) * dotHO / abs(cosTheta(wo));
+    float dwh_dwi = 4.0f * dotHO;
+    return pdf_h / dwh_dwi;
 }
 
 } // namespace pt

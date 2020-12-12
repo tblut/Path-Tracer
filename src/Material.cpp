@@ -30,7 +30,7 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
     float Pd = maxD / (maxD + maxS);
     float Ps = maxS / (maxD + maxS);
 
-    Vec3 wi, wh;
+    Vec3 wi;
     if (u1 < Pd) {
         // Reuse random variable
         u1 = remap(u1,
@@ -39,7 +39,6 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
 
         wi = sampleCosineHemisphere(u1, u2);
         assert(isNormalized(wi));
-        wh = normalize(wi + wo);
     }
     else {
         // Reuse random variable
@@ -47,14 +46,15 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
             Pd, oneMinusEpsilon<float>,
             0.0f, oneMinusEpsilon<float>);
 
-        wh = sampleGGXVNDF(wo, alpha_, u1, u2);
+        Vec3 wh = sampleGGXVNDF(wo, alpha_, u1, u2);
+        wi = reflect(wo, wh);
         assert(isNormalized(wh));
+        assert(isNormalized(wi));
         assert(dot(wh, wo) >= 0.0f);
-        wi = normalize(reflect(wo, wh));
     }
 
     if (pdf) {
-        *pdf = Pd * pdfCosineHemisphere(wi) + Ps * pdfGGXVNDF(wh, wo, alpha_);
+        *pdf = Pd * pdfCosineHemisphere(wi, wo) + Ps * pdfGGXVNDF(wi, wo, alpha_);
     }
 
     return wi;
@@ -65,9 +65,8 @@ float Material::pdf(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {
     float maxS = maxComponent(Fr_Schlick(normal, wo, kS_));
     float Pd = maxD / (maxD + maxS);
     float Ps = maxS / (maxD + maxS);
-    Vec3 wh = normalize(wi + wo);
 
-    return Pd * pdfCosineHemisphere(wi) + Ps * pdfGGXVNDF(wh, wo, alpha_);
+    return Pd * pdfCosineHemisphere(wi, wo) + Ps * pdfGGXVNDF(wi, wo, alpha_);
 }
 
 } // namespace pt
