@@ -7,16 +7,18 @@
 
 namespace pt {
 
-Material::Material(const Vec3& baseColor, float roughness,
-        float metalness, const Vec3& emittance)
+Material::Material(const Vec3& baseColor, float specular, float roughness,
+        float metalness, float transmission, const Vec3& emittance)
     : baseColor_(baseColor)
+    , specular_(specular)
     , roughness_(roughness)
     , metalness_(metalness)
+    , transmission_(transmission)
     , emittance_(emittance)
 {
     alpha_ = max(0.001f, roughness * roughness);
     kD_ = baseColor * (1.0f - metalness);
-    kS_ = lerp(Vec3(0.04f), baseColor, metalness);
+    kS_ = lerp(Vec3(specular * 0.08f), baseColor, metalness);
 }
 
 Vec3 Material::evaluate(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {

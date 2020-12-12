@@ -3,9 +3,11 @@
 #include "MathUtils.h"
 #include "OrthonormalBasis.h"
 
+// NOTE: Many of these functions are not optimized at all for clarity and debugging
 namespace pt {
 
-// All shading is done in local space where: X=(1,0,0), Y=(0,1,0), Z=(0,0,1)
+// All shading is done in local space where X=(1,0,0), Y=(0,1,0), Z=(0,0,1)
+// and the shading normal N=Z=(0,0,1). Thus, cosTheta = dot(n,w) = w.z
 inline float cosTheta(const Vec3& w) {
     return w.z;
 }
@@ -92,7 +94,7 @@ inline Vec3 specular_GGX(const Vec3& wo, const Vec3& wi, const Vec3& f0, float a
     assert(cosThetaI > 0.0f);
     assert(cosThetaH > 0.0f);
 
-    float G = G2_SmithUncorrelated_GGX(wi, wo, wh, alpha);
+    float G = G2_SmithHeightCorrelated_GGX(wi, wo, wh, alpha);
     float D = D_GGX(wh, alpha);
     return F * G * D / (4.0f * cosThetaO * cosThetaI);
 }

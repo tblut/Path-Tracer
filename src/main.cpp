@@ -16,17 +16,17 @@ int main(int argc, char** argv) {
     pt::Camera camera(
         pt::radians(60.0f),
         film.getWidth() / static_cast<float>(film.getHeight()),
-        0.250f, 4.5f,
+        0.0f, 4.5f,
         pt::lookAt(pt::Vec3(0.0f, 0.0f, 5.0f), pt::Vec3(0.0f, 0.0f, 0.0f), pt::Vec3(0, 1, 0))
     );
 
-    pt::Material redMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0, 0)), 1.0f, 0.0f, pt::Vec3(0) };
-    pt::Material greenMat{ pt::srgbToLinear(pt::Vec3(0, 0.8f, 0)), 1.0f, 0.0f, pt::Vec3(0) };
-    pt::Material whiteMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 1.0f, 0.0f, pt::Vec3(0) };
-    pt::Material plasticMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 0.0f, 0.0f, pt::Vec3(0) };
-    pt::Material metallMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 0.0f, 1.0f, pt::Vec3(0) };
-    pt::Material lightMat{ pt::Vec3(0), 1.0f, 0.0f, pt::Vec3(16) };
-    pt::Material lightMat2{ pt::Vec3(0), 1.0f, 0.0f, pt::Vec3(100) };
+    pt::Material redMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0, 0)), 1.0f, 1.0f, 0.0f, 0.0f, pt::Vec3(0) };
+    pt::Material greenMat{ pt::srgbToLinear(pt::Vec3(0, 0.8f, 0)), 1.0f, 1.0f, 0.0f, 0.0f, pt::Vec3(0) };
+    pt::Material whiteMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 4.0f, 1.0f, 0.0f, 0.0f, pt::Vec3(0) };
+    pt::Material plasticMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 0.5f, 0.0f, 0.0f, 0.0f, pt::Vec3(0) };
+    pt::Material metallMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 0.5f, 0.0f, 1.0f, 0.0f, pt::Vec3(0) };
+    pt::Material lightMat{ pt::Vec3(0), 0.5f, 1.0f, 0.0f, 0.0f, pt::Vec3(16) };
+    pt::Material lightMat2{ pt::Vec3(0), 0.5f, 1.0f, 0.0f, 0.0f, pt::Vec3(100) };
 
     pt::Sphere left(pt::Vec3(-1002, 0, 0), 1000, redMat);
     pt::Sphere right(pt::Vec3(1002, 0, 0), 1000, greenMat);

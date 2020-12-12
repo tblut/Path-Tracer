@@ -9,10 +9,12 @@
 #include <array>
 #include <algorithm>
 
+constexpr int sampleCount = 1000000;
 constexpr int numTestRuns = 5;
 constexpr int thetaRes = 10;
 constexpr int phiRes = thetaRes * 2;
-constexpr int sampleCount = 1000000;
+constexpr float thetaFactor = pt::pi<float> / thetaRes;
+constexpr float phiFactor = 2.0f * pt::pi<float> / phiRes;
 constexpr float significance = 0.001f;
 constexpr float minExpFrequency = 5.0f;
 
@@ -28,10 +30,10 @@ void testBxdfGoodnessOfFit(const BxdfPdf& pdf, const BxdfSample& sample) {
         std::array<float, thetaRes * phiRes> expFrequencies;
         for (int theta = 0; theta < thetaRes; theta++) {
             for (int phi = 0; phi < phiRes; phi++) {
-                float x0 = theta * 1.0f * pt::pi<float> / thetaRes;
-                float x1 = (theta + 1) * 1.0f * pt::pi<float> / thetaRes;
-                float y0 = phi * 2.0f * pt::pi<float> / phiRes;
-                float y1 = (phi + 1) * 2.0f * pt::pi<float> / phiRes;
+                float x0 = (theta + 0) * thetaFactor;
+                float x1 = (theta + 1) * thetaFactor;
+                float y0 = (phi + 0) * phiFactor;
+                float y1 = (phi + 1) * phiFactor;
 
                 float probability = pt::adaptiveSimpson2D([&](float theta, float phi) {
                     auto wi = pt::Vec3::fromSpherical(theta, phi);
@@ -58,8 +60,8 @@ void testBxdfGoodnessOfFit(const BxdfPdf& pdf, const BxdfSample& sample) {
                 phi += 2.0f * pt::pi<float>;
             }
 
-            int thetaBucket = static_cast<int>(theta * thetaRes / (1.0f * pt::pi<float>));
-            int phiBucket = static_cast<int>(phi * phiRes / (2.0f * pt::pi<float>));
+            int thetaBucket = static_cast<int>(theta / thetaFactor);
+            int phiBucket = static_cast<int>(phi / phiFactor);
             thetaBucket = pt::clamp(thetaBucket, 0, thetaRes - 1);
             phiBucket = pt::clamp(phiBucket, 0, phiRes - 1);
             frequencies[thetaBucket + phiBucket * thetaRes]++;
@@ -74,7 +76,7 @@ void testBxdfGoodnessOfFit(const BxdfPdf& pdf, const BxdfSample& sample) {
             return expFrequencies[a] < expFrequencies[b];
         });
 
-        // Merge buckets with less that 5 expected samples
+        // Merge buckets with less than 5 expected samples
         int dof = 0;
         float criticalValue = 0.0;
         int numMerged = 0;
