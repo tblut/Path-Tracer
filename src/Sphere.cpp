@@ -13,16 +13,20 @@ Sphere::Sphere(const Vec3& center, float radius, const Material& material)
 }
 
 float Sphere::intersect(const Ray& ray) const {
-    const float a = dot(ray.direction, ray.direction);
-    const Vec3 oc = ray.origin - center_;
-    const float halfB = dot(ray.direction, oc);
-    const float c = dot(oc, oc) - radiusSq_;
-    const float discriminant = halfB * halfB - a * c;
+    float a = dot(ray.direction, ray.direction);
+    Vec3 oc = ray.origin - center_;
+    float halfB = dot(ray.direction, oc);
+    float c = dot(oc, oc) - radiusSq_;
+    float discriminant = halfB * halfB - a * c;
     if (discriminant < 0.0f) {
         return -inf<float>;
     }
 
-    const float tmin = (-halfB - std::sqrt(discriminant)) / a;
+    float sqrtDiscr = std::sqrt(discriminant);
+    float tmin = (-halfB - sqrtDiscr) / a;
+    if (tmin < 0.0f) {
+        tmin = (-halfB + sqrtDiscr) / a;
+    }
     return tmin;
 }
 
@@ -32,11 +36,11 @@ Vec3 Sphere::normalAt(const Vec3& p) const {
 
 Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) const {
     Vec3 w = center_ - p;
-    const float distSq = lengthSq(w);
-    const float cosThetaMax = std::sqrt(1.0f - radiusSq_ / distSq);
-    const float cosTheta = 1.0f - u1 + u1 * cosThetaMax;
-    const float sinTheta = std::sqrt(1.0f - cosTheta * cosTheta);
-    const float phi = 2.0f * pi<float> * u2;
+    float distSq = lengthSq(w);
+    float cosThetaMax = std::sqrt(1.0f - radiusSq_ / distSq);
+    float cosTheta = 1.0f - u1 + u1 * cosThetaMax;
+    float sinTheta = std::sqrt(1.0f - cosTheta * cosTheta);
+    float phi = 2.0f * pi<float> * u2;
     Vec3 dir(
         sinTheta * std::cos(phi),
         sinTheta * std::sin(phi),
@@ -54,7 +58,7 @@ Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) cons
 }
 
 float Sphere::pdf(const Vec3& p) const {
-    const float cosThetaMax = std::sqrt(1.0f - radiusSq_ / lengthSq(center_ - p));
+    float cosThetaMax = std::sqrt(1.0f - radiusSq_ / lengthSq(center_ - p));
     return 1.0f / (2.0f * pi<float> * (1.0f - cosThetaMax));
 }
 
