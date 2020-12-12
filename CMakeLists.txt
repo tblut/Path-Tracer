@@ -4,7 +4,7 @@ project(PathTracer LANGUAGES CXX)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.h" "src/*.cpp")
-list(REMOVE_ITEM SOURCE_FILES "src/main.cpp") # Remove main from common lib
+list(REMOVE_ITEM SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/main.cpp") # Remove main from common lib
 source_group(TREE ${CMAKE_SOURCE_DIR} FILES ${SOURCE_FILES})
 
 add_library(PathTracerLib STATIC ${SOURCE_FILES})
@@ -27,11 +27,19 @@ target_include_directories(Catch2 INTERFACE ${CMAKE_SOURCE_DIR}/extern/catch2/in
 
 add_executable(MathTests "tests/MathTests.cpp")
 target_link_libraries(MathTests PRIVATE PathTracerLib Catch2)
-set_property(TARGET MathTests PROPERTY FOLDER "Tests")
+set_target_properties(MathTests PROPERTIES FOLDER "Tests")
 
-add_executable(SamplingTests "tests/SamplingTests.cpp")
-target_link_libraries(SamplingTests PRIVATE PathTracerLib Catch2)
-set_property(TARGET SamplingTests PROPERTY FOLDER "Tests")
+add_executable(RngTests "tests/RngTests.cpp")
+target_link_libraries(RngTests PRIVATE PathTracerLib Catch2)
+set_target_properties(RngTests PROPERTIES FOLDER "Tests")
+
+add_executable(BxdfTests "tests/BxdfTests.cpp")
+target_link_libraries(BxdfTests PRIVATE PathTracerLib Catch2)
+set_target_properties(BxdfTests PROPERTIES FOLDER "Tests")
+
+add_executable(HelperTests "tests/HelperTests.cpp")
+target_link_libraries(HelperTests PRIVATE PathTracerLib Catch2)
+set_target_properties(HelperTests PROPERTIES FOLDER "Tests")
 
 # Enable link time optimizations
 include(CheckIPOSupported)
@@ -43,6 +51,10 @@ if(ipo_result)
 	set_target_properties(PathTracer PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
 	set_target_properties(MathTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 	set_target_properties(MathTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-	set_target_properties(SamplingTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-	set_target_properties(SamplingTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+	set_target_properties(RngTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+	set_target_properties(RngTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+	set_target_properties(BxdfTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+	set_target_properties(BxdfTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+	set_target_properties(HelperTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+	set_target_properties(HelperTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
 endif()
