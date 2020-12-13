@@ -62,4 +62,5 @@ TEST_CASE("Adaptive Simpson Sanity Check") {
     integral = pt::adaptiveSimpson2D([](double x, double y) {
         return std::sin(x);
     }, 0.0, pt::pi<double>, 0.0, 2.0 * pt::pi<double>);
+    CHECK(integral == pt::Approx(4.0 * pt::pi<double>));
 }

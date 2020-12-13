@@ -6,7 +6,7 @@
 #include "RandomSeries.h"
 
 TEST_CASE("Sphere") {
-    pt::Material dummyMat(pt::Vec3(), 0.0f, 0.0f);
+    pt::Material dummyMat(pt::Vec3(), 0.0f, 0.0f, 0.0f);
     pt::Vec3 sphereCenter(1.0f, 1.0f, 1.0f);
     float sphereRadius = 2.0f;
     pt::Sphere sphere(sphereCenter, sphereRadius, dummyMat);
