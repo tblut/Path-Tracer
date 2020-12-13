@@ -8,169 +8,168 @@
 #include "Vector4.h"
 #include "Matrix4x4.h"
 
-TEST_CASE("Functions") {
-    SECTION("min") {
-        REQUIRE(pt::min(-1.0f, 1.0f) == pt::Approx(-1.0f));
-        REQUIRE(pt::min(pt::Vec2(1.0f, 2.0f), pt::Vec2(2.0f, 1.0f)) == pt::ApproxVec2(1.0f, 1.0f));
-        REQUIRE(pt::min(pt::Vec3(1.0f, 3.0f, 2.0f), pt::Vec3(3.0f, 2.0f, 1.0f)) == pt::ApproxVec3(1.0f, 2.0f, 1.0f));
-        REQUIRE(pt::min(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f), pt::Vec4(4.0f, 3.0f, 2.0f, 1.0f)) == pt::ApproxVec4(1.0f, 2.0f, 2.0f, 1.0f));
-    }
-    SECTION("max") {
-        REQUIRE(pt::max(-1.0f, 1.0f) == pt::Approx(1.0f));
-        REQUIRE(pt::max(pt::Vec2(1.0f, 2.0f), pt::Vec2(2.0f, 1.0f)) == pt::ApproxVec2(2.0f, 2.0f));
-        REQUIRE(pt::max(pt::Vec3(1.0f, 3.0f, 2.0f), pt::Vec3(3.0f, 2.0f, 1.0f)) == pt::ApproxVec3(3.0f, 3.0f, 2.0f));
-        REQUIRE(pt::max(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f), pt::Vec4(4.0f, 3.0f, 2.0f, 1.0f)) == pt::ApproxVec4(4.0f, 3.0f, 3.0f, 4.0f));
-    }
+// Functions
+TEST_CASE("min") {
+    CHECK(pt::min(-1.0f, 1.0f) == pt::Approx(-1.0f));
+    CHECK(pt::min(pt::Vec2(1.0f, 2.0f), pt::Vec2(2.0f, 1.0f)) == pt::ApproxVec2(1.0f, 1.0f));
+    CHECK(pt::min(pt::Vec3(1.0f, 3.0f, 2.0f), pt::Vec3(3.0f, 2.0f, 1.0f)) == pt::ApproxVec3(1.0f, 2.0f, 1.0f));
+    CHECK(pt::min(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f), pt::Vec4(4.0f, 3.0f, 2.0f, 1.0f)) == pt::ApproxVec4(1.0f, 2.0f, 2.0f, 1.0f));
+}
+TEST_CASE("max") {
+    CHECK(pt::max(-1.0f, 1.0f) == pt::Approx(1.0f));
+    CHECK(pt::max(pt::Vec2(1.0f, 2.0f), pt::Vec2(2.0f, 1.0f)) == pt::ApproxVec2(2.0f, 2.0f));
+    CHECK(pt::max(pt::Vec3(1.0f, 3.0f, 2.0f), pt::Vec3(3.0f, 2.0f, 1.0f)) == pt::ApproxVec3(3.0f, 3.0f, 2.0f));
+    CHECK(pt::max(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f), pt::Vec4(4.0f, 3.0f, 2.0f, 1.0f)) == pt::ApproxVec4(4.0f, 3.0f, 3.0f, 4.0f));
+}
 
-    SECTION("minComponent") {
-        REQUIRE(pt::minComponent(pt::Vec2(1.0f, 2.0f)) == pt::Approx(1.0f));
-        REQUIRE(pt::minComponent(pt::Vec2(2.0f, 1.0f)) == pt::Approx(1.0f));
+TEST_CASE("minComponent") {
+    CHECK(pt::minComponent(pt::Vec2(1.0f, 2.0f)) == pt::Approx(1.0f));
+    CHECK(pt::minComponent(pt::Vec2(2.0f, 1.0f)) == pt::Approx(1.0f));
 
-        REQUIRE(pt::minComponent(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::Approx(1.0f));
-        REQUIRE(pt::minComponent(pt::Vec3(1.0f, 3.0f, 2.0f)) == pt::Approx(1.0f));
-        REQUIRE(pt::minComponent(pt::Vec3(3.0f, 2.0f, 1.0f)) == pt::Approx(1.0f));
+    CHECK(pt::minComponent(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::Approx(1.0f));
+    CHECK(pt::minComponent(pt::Vec3(1.0f, 3.0f, 2.0f)) == pt::Approx(1.0f));
+    CHECK(pt::minComponent(pt::Vec3(3.0f, 2.0f, 1.0f)) == pt::Approx(1.0f));
 
-        REQUIRE(pt::minComponent(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::Approx(1.0f));
-        REQUIRE(pt::minComponent(pt::Vec4(1.0f, 2.0f, 4.0f, 3.0f)) == pt::Approx(1.0f));
-        REQUIRE(pt::minComponent(pt::Vec4(1.0f, 4.0f, 3.0f, 2.0f)) == pt::Approx(1.0f));
-        REQUIRE(pt::minComponent(pt::Vec4(4.0f, 2.0f, 3.0f, 1.0f)) == pt::Approx(1.0f));
-    }
-    SECTION("maxComponent") {
-        REQUIRE(pt::maxComponent(pt::Vec2(1.0f, 2.0f)) == pt::Approx(2.0f));
-        REQUIRE(pt::maxComponent(pt::Vec2(2.0f, 1.0f)) == pt::Approx(2.0f));
+    CHECK(pt::minComponent(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::Approx(1.0f));
+    CHECK(pt::minComponent(pt::Vec4(1.0f, 2.0f, 4.0f, 3.0f)) == pt::Approx(1.0f));
+    CHECK(pt::minComponent(pt::Vec4(1.0f, 4.0f, 3.0f, 2.0f)) == pt::Approx(1.0f));
+    CHECK(pt::minComponent(pt::Vec4(4.0f, 2.0f, 3.0f, 1.0f)) == pt::Approx(1.0f));
+}
+TEST_CASE("maxComponent") {
+    CHECK(pt::maxComponent(pt::Vec2(1.0f, 2.0f)) == pt::Approx(2.0f));
+    CHECK(pt::maxComponent(pt::Vec2(2.0f, 1.0f)) == pt::Approx(2.0f));
 
-        REQUIRE(pt::maxComponent(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::Approx(3.0f));
-        REQUIRE(pt::maxComponent(pt::Vec3(1.0f, 3.0f, 2.0f)) == pt::Approx(3.0f));
-        REQUIRE(pt::maxComponent(pt::Vec3(3.0f, 2.0f, 1.0f)) == pt::Approx(3.0f));
+    CHECK(pt::maxComponent(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::Approx(3.0f));
+    CHECK(pt::maxComponent(pt::Vec3(1.0f, 3.0f, 2.0f)) == pt::Approx(3.0f));
+    CHECK(pt::maxComponent(pt::Vec3(3.0f, 2.0f, 1.0f)) == pt::Approx(3.0f));
 
-        REQUIRE(pt::maxComponent(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::Approx(4.0f));
-        REQUIRE(pt::maxComponent(pt::Vec4(1.0f, 2.0f, 4.0f, 3.0f)) == pt::Approx(4.0f));
-        REQUIRE(pt::maxComponent(pt::Vec4(1.0f, 4.0f, 3.0f, 2.0f)) == pt::Approx(4.0f));
-        REQUIRE(pt::maxComponent(pt::Vec4(4.0f, 2.0f, 3.0f, 1.0f)) == pt::Approx(4.0f));
-    }
+    CHECK(pt::maxComponent(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::Approx(4.0f));
+    CHECK(pt::maxComponent(pt::Vec4(1.0f, 2.0f, 4.0f, 3.0f)) == pt::Approx(4.0f));
+    CHECK(pt::maxComponent(pt::Vec4(1.0f, 4.0f, 3.0f, 2.0f)) == pt::Approx(4.0f));
+    CHECK(pt::maxComponent(pt::Vec4(4.0f, 2.0f, 3.0f, 1.0f)) == pt::Approx(4.0f));
+}
 
-    SECTION("clamp") {
-        REQUIRE(pt::clamp(-1.0f, 1.5f, 1.75f) == pt::Approx(1.5f));
-        REQUIRE(pt::clamp(1.6f, 1.5f, 1.75f) == pt::Approx(1.6f));
-        REQUIRE(pt::clamp(3.0f, 1.5f, 1.75f) == pt::Approx(1.75f));
+TEST_CASE("clamp") {
+    CHECK(pt::clamp(-1.0f, 1.5f, 1.75f) == pt::Approx(1.5f));
+    CHECK(pt::clamp(1.6f, 1.5f, 1.75f) == pt::Approx(1.6f));
+    CHECK(pt::clamp(3.0f, 1.5f, 1.75f) == pt::Approx(1.75f));
 
-        REQUIRE(pt::clamp(pt::Vec2(-1.0f, -2.0f), 1.5f, 1.75f) == pt::ApproxVec2(1.5f, 1.5f));
-        REQUIRE(pt::clamp(pt::Vec2(1.0f, 0.9f), 1.5f, 1.75f) == pt::ApproxVec2(1.5f, 1.5f));
-        REQUIRE(pt::clamp(pt::Vec2(1.6f, 1.7f), 1.5f, 1.75f) == pt::ApproxVec2(1.6f, 1.7f));
-        REQUIRE(pt::clamp(pt::Vec2(2.0f, 3.0f), 1.5f, 1.75f) == pt::ApproxVec2(1.75f, 1.75f));
+    CHECK(pt::clamp(pt::Vec2(-1.0f, -2.0f), 1.5f, 1.75f) == pt::ApproxVec2(1.5f, 1.5f));
+    CHECK(pt::clamp(pt::Vec2(1.0f, 0.9f), 1.5f, 1.75f) == pt::ApproxVec2(1.5f, 1.5f));
+    CHECK(pt::clamp(pt::Vec2(1.6f, 1.7f), 1.5f, 1.75f) == pt::ApproxVec2(1.6f, 1.7f));
+    CHECK(pt::clamp(pt::Vec2(2.0f, 3.0f), 1.5f, 1.75f) == pt::ApproxVec2(1.75f, 1.75f));
 
-        REQUIRE(pt::clamp(pt::Vec3(-1.0f, -2.0f, -3.0f), 1.5f, 1.75f) == pt::ApproxVec3(1.5f, 1.5f, 1.5f));
-        REQUIRE(pt::clamp(pt::Vec3(1.0f, 1.0f, 1.0f), 1.5f, 1.75f) == pt::ApproxVec3(1.5f, 1.5f, 1.5f));
-        REQUIRE(pt::clamp(pt::Vec3(1.6f, 1.7f, 1.72f), 1.5f, 1.75f) == pt::ApproxVec3(1.6f, 1.7f, 1.72f));
-        REQUIRE(pt::clamp(pt::Vec3(2.0f, 3.0f, 4.0f), 1.5f, 1.75f) == pt::ApproxVec3(1.75f, 1.75f, 1.75f));
+    CHECK(pt::clamp(pt::Vec3(-1.0f, -2.0f, -3.0f), 1.5f, 1.75f) == pt::ApproxVec3(1.5f, 1.5f, 1.5f));
+    CHECK(pt::clamp(pt::Vec3(1.0f, 1.0f, 1.0f), 1.5f, 1.75f) == pt::ApproxVec3(1.5f, 1.5f, 1.5f));
+    CHECK(pt::clamp(pt::Vec3(1.6f, 1.7f, 1.72f), 1.5f, 1.75f) == pt::ApproxVec3(1.6f, 1.7f, 1.72f));
+    CHECK(pt::clamp(pt::Vec3(2.0f, 3.0f, 4.0f), 1.5f, 1.75f) == pt::ApproxVec3(1.75f, 1.75f, 1.75f));
 
-        REQUIRE(pt::clamp(pt::Vec4(-1.0f, -1.0f, -1.0f, -1.0f), 1.5f, 1.75f) == pt::ApproxVec4(1.5f, 1.5f, 1.5f, 1.5f));
-        REQUIRE(pt::clamp(pt::Vec4(1.0f, 1.0f, 1.0f, 1.0f), 1.5f, 1.75f) == pt::ApproxVec4(1.5f, 1.5f, 1.5f, 1.5f));
-        REQUIRE(pt::clamp(pt::Vec4(1.6f, 1.7f, 1.72f, 1.74f), 1.5f, 1.75f) == pt::ApproxVec4(1.6f, 1.7f, 1.72f, 1.74f));
-        REQUIRE(pt::clamp(pt::Vec4(2.0f, 3.0f, 4.0f, 5.0f), 1.5f, 1.75f) == pt::ApproxVec4(1.75f, 1.75f, 1.75f, 1.75f));
-    }
+    CHECK(pt::clamp(pt::Vec4(-1.0f, -1.0f, -1.0f, -1.0f), 1.5f, 1.75f) == pt::ApproxVec4(1.5f, 1.5f, 1.5f, 1.5f));
+    CHECK(pt::clamp(pt::Vec4(1.0f, 1.0f, 1.0f, 1.0f), 1.5f, 1.75f) == pt::ApproxVec4(1.5f, 1.5f, 1.5f, 1.5f));
+    CHECK(pt::clamp(pt::Vec4(1.6f, 1.7f, 1.72f, 1.74f), 1.5f, 1.75f) == pt::ApproxVec4(1.6f, 1.7f, 1.72f, 1.74f));
+    CHECK(pt::clamp(pt::Vec4(2.0f, 3.0f, 4.0f, 5.0f), 1.5f, 1.75f) == pt::ApproxVec4(1.75f, 1.75f, 1.75f, 1.75f));
+}
 
-    SECTION("saturate") {
-        REQUIRE(pt::saturate(-1.0f) == pt::Approx(0.0f));
-        REQUIRE(pt::saturate(0.6f) == pt::Approx(0.6f));
-        REQUIRE(pt::saturate(2.0f) == pt::Approx(1.0f));
+TEST_CASE("saturate") {
+    CHECK(pt::saturate(-1.0f) == pt::Approx(0.0f));
+    CHECK(pt::saturate(0.6f) == pt::Approx(0.6f));
+    CHECK(pt::saturate(2.0f) == pt::Approx(1.0f));
 
-        REQUIRE(pt::saturate(pt::Vec2(-1.0f, -2.0f)) == pt::ApproxVec2(0.0f, 0.0f));
-        REQUIRE(pt::saturate(pt::Vec2(0.6f, 0.7f)) == pt::ApproxVec2(0.6f, 0.7f));
-        REQUIRE(pt::saturate(pt::Vec2(1.0f, 2.0f)) == pt::ApproxVec2(1.0f, 1.0f));
+    CHECK(pt::saturate(pt::Vec2(-1.0f, -2.0f)) == pt::ApproxVec2(0.0f, 0.0f));
+    CHECK(pt::saturate(pt::Vec2(0.6f, 0.7f)) == pt::ApproxVec2(0.6f, 0.7f));
+    CHECK(pt::saturate(pt::Vec2(1.0f, 2.0f)) == pt::ApproxVec2(1.0f, 1.0f));
 
-        REQUIRE(pt::saturate(pt::Vec3(-1.0f, -2.0f, -3.0f)) == pt::ApproxVec3(0.0f, 0.0f, 0.0f));
-        REQUIRE(pt::saturate(pt::Vec3(0.6f, 0.7f, 0.8f)) == pt::ApproxVec3(0.6f, 0.7f, 0.8f));
-        REQUIRE(pt::saturate(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::ApproxVec3(1.0f, 1.0f, 1.0f));
+    CHECK(pt::saturate(pt::Vec3(-1.0f, -2.0f, -3.0f)) == pt::ApproxVec3(0.0f, 0.0f, 0.0f));
+    CHECK(pt::saturate(pt::Vec3(0.6f, 0.7f, 0.8f)) == pt::ApproxVec3(0.6f, 0.7f, 0.8f));
+    CHECK(pt::saturate(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::ApproxVec3(1.0f, 1.0f, 1.0f));
 
-        REQUIRE(pt::saturate(pt::Vec4(-1.0f, -2.0f, -3.0f, -4.0f)) == pt::ApproxVec4(0.0f, 0.0f, 0.0f, 0.0f));
-        REQUIRE(pt::saturate(pt::Vec4(0.6f, 0.7f, 0.8f, 0.9f)) == pt::ApproxVec4(0.6f, 0.7f, 0.8f, 0.9f));
-        REQUIRE(pt::saturate(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::ApproxVec4(1.0f, 1.0f, 1.0f, 1.0f));
-    }
+    CHECK(pt::saturate(pt::Vec4(-1.0f, -2.0f, -3.0f, -4.0f)) == pt::ApproxVec4(0.0f, 0.0f, 0.0f, 0.0f));
+    CHECK(pt::saturate(pt::Vec4(0.6f, 0.7f, 0.8f, 0.9f)) == pt::ApproxVec4(0.6f, 0.7f, 0.8f, 0.9f));
+    CHECK(pt::saturate(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::ApproxVec4(1.0f, 1.0f, 1.0f, 1.0f));
+}
 
-    SECTION("abs") {
-        REQUIRE(pt::abs(-1.0f) == pt::Approx(1.0f));
-        REQUIRE(pt::abs(1.0f) == pt::Approx(1.0f));
+TEST_CASE("abs") {
+    CHECK(pt::abs(-1.0f) == pt::Approx(1.0f));
+    CHECK(pt::abs(1.0f) == pt::Approx(1.0f));
 
-        REQUIRE(pt::abs(pt::Vec2(1.0f, 2.0f)) == pt::ApproxVec2(1.0f, 2.0f));
-        REQUIRE(pt::abs(pt::Vec2(-1.0f, -2.0f)) == pt::ApproxVec2(1.0f, 2.0f));
+    CHECK(pt::abs(pt::Vec2(1.0f, 2.0f)) == pt::ApproxVec2(1.0f, 2.0f));
+    CHECK(pt::abs(pt::Vec2(-1.0f, -2.0f)) == pt::ApproxVec2(1.0f, 2.0f));
 
-        REQUIRE(pt::abs(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
-        REQUIRE(pt::abs(pt::Vec3(-1.0f, -2.0f, -3.0f)) == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
+    CHECK(pt::abs(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
+    CHECK(pt::abs(pt::Vec3(-1.0f, -2.0f, -3.0f)) == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
 
-        REQUIRE(pt::abs(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
-        REQUIRE(pt::abs(pt::Vec4(-1.0f, -2.0f, -3.0f, -4.0f)) == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
-    }
+    CHECK(pt::abs(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
+    CHECK(pt::abs(pt::Vec4(-1.0f, -2.0f, -3.0f, -4.0f)) == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
+}
 
-    SECTION("floor") {
-        REQUIRE(pt::floor(-1.0f) == pt::Approx(-1.0f));
-        REQUIRE(pt::floor(1.0f) == pt::Approx(1.0f));
-        REQUIRE(pt::floor(-1.999f) == pt::Approx(-2.0f));
-        REQUIRE(pt::floor(2.999f) == pt::Approx(2.0f));
+TEST_CASE("floor") {
+    CHECK(pt::floor(-1.0f) == pt::Approx(-1.0f));
+    CHECK(pt::floor(1.0f) == pt::Approx(1.0f));
+    CHECK(pt::floor(-1.999f) == pt::Approx(-2.0f));
+    CHECK(pt::floor(2.999f) == pt::Approx(2.0f));
 
-        REQUIRE(pt::floor(pt::Vec2(-1.0f, -2.0f)) == pt::ApproxVec2(-1.0f, -2.0f));
-        REQUIRE(pt::floor(pt::Vec2(1.0f, 2.0f)) == pt::ApproxVec2(1.0f, 2.0f));
-        REQUIRE(pt::floor(pt::Vec2(-1.4f, -2.999f)) == pt::ApproxVec2(-2.0f, -3.0f));
-        REQUIRE(pt::floor(pt::Vec2(1.4f, 2.999f)) == pt::ApproxVec2(1.0f, 2.0f));
+    CHECK(pt::floor(pt::Vec2(-1.0f, -2.0f)) == pt::ApproxVec2(-1.0f, -2.0f));
+    CHECK(pt::floor(pt::Vec2(1.0f, 2.0f)) == pt::ApproxVec2(1.0f, 2.0f));
+    CHECK(pt::floor(pt::Vec2(-1.4f, -2.999f)) == pt::ApproxVec2(-2.0f, -3.0f));
+    CHECK(pt::floor(pt::Vec2(1.4f, 2.999f)) == pt::ApproxVec2(1.0f, 2.0f));
 
-        REQUIRE(pt::floor(pt::Vec3(-1.0f, -2.0f, -3.0f)) == pt::ApproxVec3(-1.0f, -2.0f, -3.0f));
-        REQUIRE(pt::floor(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
-        REQUIRE(pt::floor(pt::Vec3(-1.4f, -2.999f, -3.645f)) == pt::ApproxVec3(-2.0f, -3.0f, -4.0f));
-        REQUIRE(pt::floor(pt::Vec3(1.4f, 2.999f, 3.645f)) == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
+    CHECK(pt::floor(pt::Vec3(-1.0f, -2.0f, -3.0f)) == pt::ApproxVec3(-1.0f, -2.0f, -3.0f));
+    CHECK(pt::floor(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
+    CHECK(pt::floor(pt::Vec3(-1.4f, -2.999f, -3.645f)) == pt::ApproxVec3(-2.0f, -3.0f, -4.0f));
+    CHECK(pt::floor(pt::Vec3(1.4f, 2.999f, 3.645f)) == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
 
-        REQUIRE(pt::floor(pt::Vec4(-1.0f, -2.0f, -3.0f, -4.0f)) == pt::ApproxVec4(-1.0f, -2.0f, -3.0f, -4.0f));
-        REQUIRE(pt::floor(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
-        REQUIRE(pt::floor(pt::Vec4(-1.4f, -2.999f, -3.645f, -4.031f)) == pt::ApproxVec4(-2.0f, -3.0f, -4.0f, -5.0f));
-        REQUIRE(pt::floor(pt::Vec4(1.4f, 2.999f, 3.645f, 4.031f)) == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
-    }
+    CHECK(pt::floor(pt::Vec4(-1.0f, -2.0f, -3.0f, -4.0f)) == pt::ApproxVec4(-1.0f, -2.0f, -3.0f, -4.0f));
+    CHECK(pt::floor(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
+    CHECK(pt::floor(pt::Vec4(-1.4f, -2.999f, -3.645f, -4.031f)) == pt::ApproxVec4(-2.0f, -3.0f, -4.0f, -5.0f));
+    CHECK(pt::floor(pt::Vec4(1.4f, 2.999f, 3.645f, 4.031f)) == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
+}
 
-    SECTION("ceil") {
-        REQUIRE(pt::ceil(-1.0f) == pt::Approx(-1.0f));
-        REQUIRE(pt::ceil(1.0f) == pt::Approx(1.0f));
-        REQUIRE(pt::ceil(-1.999f) == pt::Approx(-1.0f));
-        REQUIRE(pt::ceil(2.999f) == pt::Approx(3.0f));
+TEST_CASE("ceil") {
+    CHECK(pt::ceil(-1.0f) == pt::Approx(-1.0f));
+    CHECK(pt::ceil(1.0f) == pt::Approx(1.0f));
+    CHECK(pt::ceil(-1.999f) == pt::Approx(-1.0f));
+    CHECK(pt::ceil(2.999f) == pt::Approx(3.0f));
 
-        REQUIRE(pt::ceil(pt::Vec2(-1.0f, -2.0f)) == pt::ApproxVec2(-1.0f, -2.0f));
-        REQUIRE(pt::ceil(pt::Vec2(1.0f, 2.0f)) == pt::ApproxVec2(1.0f, 2.0f));
-        REQUIRE(pt::ceil(pt::Vec2(-1.4f, -2.999f)) == pt::ApproxVec2(-1.0f, -2.0f));
-        REQUIRE(pt::ceil(pt::Vec2(1.4f, 2.999f)) == pt::ApproxVec2(2.0f, 3.0f));
+    CHECK(pt::ceil(pt::Vec2(-1.0f, -2.0f)) == pt::ApproxVec2(-1.0f, -2.0f));
+    CHECK(pt::ceil(pt::Vec2(1.0f, 2.0f)) == pt::ApproxVec2(1.0f, 2.0f));
+    CHECK(pt::ceil(pt::Vec2(-1.4f, -2.999f)) == pt::ApproxVec2(-1.0f, -2.0f));
+    CHECK(pt::ceil(pt::Vec2(1.4f, 2.999f)) == pt::ApproxVec2(2.0f, 3.0f));
 
-        REQUIRE(pt::ceil(pt::Vec3(-1.0f, -2.0f, -3.0f)) == pt::ApproxVec3(-1.0f, -2.0f, -3.0f));
-        REQUIRE(pt::ceil(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
-        REQUIRE(pt::ceil(pt::Vec3(-1.4f, -2.999f, -3.645f)) == pt::ApproxVec3(-1.0f, -2.0f, -3.0f));
-        REQUIRE(pt::ceil(pt::Vec3(1.4f, 2.999f, 3.645f)) == pt::ApproxVec3(2.0f, 3.0f, 4.0f));
+    CHECK(pt::ceil(pt::Vec3(-1.0f, -2.0f, -3.0f)) == pt::ApproxVec3(-1.0f, -2.0f, -3.0f));
+    CHECK(pt::ceil(pt::Vec3(1.0f, 2.0f, 3.0f)) == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
+    CHECK(pt::ceil(pt::Vec3(-1.4f, -2.999f, -3.645f)) == pt::ApproxVec3(-1.0f, -2.0f, -3.0f));
+    CHECK(pt::ceil(pt::Vec3(1.4f, 2.999f, 3.645f)) == pt::ApproxVec3(2.0f, 3.0f, 4.0f));
 
-        REQUIRE(pt::ceil(pt::Vec4(-1.0f, -2.0f, -3.0f, -4.0f)) == pt::ApproxVec4(-1.0f, -2.0f, -3.0f, -4.0f));
-        REQUIRE(pt::ceil(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
-        REQUIRE(pt::ceil(pt::Vec4(-1.4f, -2.999f, -3.645f, -4.031f)) == pt::ApproxVec4(-1.0f, -2.0f, -3.0f, -4.0f));
-        REQUIRE(pt::ceil(pt::Vec4(1.4f, 2.999f, 3.645f, 4.031f)) == pt::ApproxVec4(2.0f, 3.0f, 4.0f, 5.0f));
-    }
+    CHECK(pt::ceil(pt::Vec4(-1.0f, -2.0f, -3.0f, -4.0f)) == pt::ApproxVec4(-1.0f, -2.0f, -3.0f, -4.0f));
+    CHECK(pt::ceil(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
+    CHECK(pt::ceil(pt::Vec4(-1.4f, -2.999f, -3.645f, -4.031f)) == pt::ApproxVec4(-1.0f, -2.0f, -3.0f, -4.0f));
+    CHECK(pt::ceil(pt::Vec4(1.4f, 2.999f, 3.645f, 4.031f)) == pt::ApproxVec4(2.0f, 3.0f, 4.0f, 5.0f));
+}
 
-    SECTION("lerp") {
-        REQUIRE(pt::lerp(1.0f, 3.0f, 0.5f) == pt::Approx(2.0f));
-        REQUIRE(pt::lerp(pt::Vec2(1.0f, 2.0f), pt::Vec2(2.0f, 4.0f), 0.5f) == pt::ApproxVec2(1.5f, 3.0f));
-        REQUIRE(pt::lerp(pt::Vec3(1.0f, 2.0f, 3.0f), pt::Vec3(2.0f, 4.0f, 6.0f), 0.5f) == pt::ApproxVec3(1.5f, 3.0f, 4.5f));
-        REQUIRE(pt::lerp(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f), pt::Vec4(2.0f, 4.0f, 6.0f, 8.0f), 0.5f) == pt::ApproxVec4(1.5f, 3.0f, 4.5f, 6.0f));
-    }
+TEST_CASE("lerp") {
+    CHECK(pt::lerp(1.0f, 3.0f, 0.5f) == pt::Approx(2.0f));
+    CHECK(pt::lerp(pt::Vec2(1.0f, 2.0f), pt::Vec2(2.0f, 4.0f), 0.5f) == pt::ApproxVec2(1.5f, 3.0f));
+    CHECK(pt::lerp(pt::Vec3(1.0f, 2.0f, 3.0f), pt::Vec3(2.0f, 4.0f, 6.0f), 0.5f) == pt::ApproxVec3(1.5f, 3.0f, 4.5f));
+    CHECK(pt::lerp(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f), pt::Vec4(2.0f, 4.0f, 6.0f, 8.0f), 0.5f) == pt::ApproxVec4(1.5f, 3.0f, 4.5f, 6.0f));
+}
 
-    SECTION("remap") {
-        REQUIRE(pt::remap(0.0f, 0.0f, 1.0f, -1.0f, 1.0f) == pt::Approx(-1.0f));
-        REQUIRE(pt::remap(0.0f, -1.0f, 1.0f, 0.0f, 1.0f) == pt::Approx(0.5f));
-    }
+TEST_CASE("remap") {
+    CHECK(pt::remap(0.0f, 0.0f, 1.0f, -1.0f, 1.0f) == pt::Approx(-1.0f));
+    CHECK(pt::remap(0.0f, -1.0f, 1.0f, 0.0f, 1.0f) == pt::Approx(0.5f));
+}
 
-    SECTION("degrees") {
-        REQUIRE(pt::degrees(0.0f) == pt::Approx(0.0f));
-        REQUIRE(pt::degrees(pt::pi<float>) == pt::Approx(180.0f));
-    }
+TEST_CASE("degrees") {
+    CHECK(pt::degrees(0.0f) == pt::Approx(0.0f));
+    CHECK(pt::degrees(pt::pi<float>) == pt::Approx(180.0f));
+}
 
-    SECTION("radians") {
-        REQUIRE(pt::radians(0.0f) == pt::Approx(0.0f));
-        REQUIRE(pt::radians(180.0f) == pt::Approx(pt::pi<float>));
-    }
+TEST_CASE("radians") {
+    CHECK(pt::radians(0.0f) == pt::Approx(0.0f));
+    CHECK(pt::radians(180.0f) == pt::Approx(pt::pi<float>));
 }
 
 
-TEST_CASE("Vector Operators") {
+TEST_CASE("Vector Constructors and Operators") {
     auto a2 = pt::Vec2(1.0f, 2.0f);
     auto b2 = pt::Vec2(3.0f, 5.0f);
 
@@ -185,244 +184,259 @@ TEST_CASE("Vector Operators") {
         auto v3 = pt::Vec3(4.0f);
         auto v4 = pt::Vec4(4.0f);
 
-        REQUIRE(v2 == pt::ApproxVec2(4.0f, 4.0f));
-        REQUIRE(a2 == pt::ApproxVec2(1.0f, 2.0f));
-        REQUIRE(a2 == pt::ApproxVec2(a2.r, a2.g));
-        REQUIRE(a2 == pt::ApproxVec2(a2.data[0], a2.data[1]));
-        REQUIRE(a2 == pt::ApproxVec2(a2[0], a2[1]));
+        CHECK(v2 == pt::ApproxVec2(4.0f, 4.0f));
+        CHECK(a2 == pt::ApproxVec2(1.0f, 2.0f));
+        CHECK(a2 == pt::ApproxVec2(a2.r, a2.g));
+        CHECK(a2 == pt::ApproxVec2(a2.data[0], a2.data[1]));
+        CHECK(a2 == pt::ApproxVec2(a2[0], a2[1]));
 
-        REQUIRE(v3 == pt::ApproxVec3(4.0f, 4.0f, 4.0f));
-        REQUIRE(a3 == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
-        REQUIRE(a3 == pt::ApproxVec3(a3.r, a3.g, a3.b));
-        REQUIRE(a3 == pt::ApproxVec3(a3.data[0], a3.data[1], a3.data[2]));
-        REQUIRE(a3 == pt::ApproxVec3(a3[0], a3[1], a3[2]));
+        CHECK(v3 == pt::ApproxVec3(4.0f, 4.0f, 4.0f));
+        CHECK(a3 == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
+        CHECK(a3 == pt::ApproxVec3(a3.r, a3.g, a3.b));
+        CHECK(a3 == pt::ApproxVec3(a3.data[0], a3.data[1], a3.data[2]));
+        CHECK(a3 == pt::ApproxVec3(a3[0], a3[1], a3[2]));
 
-        REQUIRE(v4 == pt::ApproxVec4(4.0f, 4.0f, 4.0f, 4.0f));
-        REQUIRE(a4 == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
-        REQUIRE(a4 == pt::ApproxVec4(a4.r, a4.g, a4.b, a4.a));
-        REQUIRE(a4 == pt::ApproxVec4(a4.data[0], a4.data[1], a4.data[2], a4.data[3]));
-        REQUIRE(a4 == pt::ApproxVec4(a4[0], a4[1], a4[2], a4[3]));
+        CHECK(v4 == pt::ApproxVec4(4.0f, 4.0f, 4.0f, 4.0f));
+        CHECK(a4 == pt::ApproxVec4(1.0f, 2.0f, 3.0f, 4.0f));
+        CHECK(a4 == pt::ApproxVec4(a4.r, a4.g, a4.b, a4.a));
+        CHECK(a4 == pt::ApproxVec4(a4.data[0], a4.data[1], a4.data[2], a4.data[3]));
+        CHECK(a4 == pt::ApproxVec4(a4[0], a4[1], a4[2], a4[3]));
     }
 
     SECTION("fromSpherical") {
-        REQUIRE(pt::Vec2::fromSpherical(0.0f) == pt::ApproxVec2(1.0f, 0.0f));
-        REQUIRE(pt::Vec2::fromSpherical(pt::pi<float> / 2.0f) == pt::ApproxVec2(0.0f, 1.0f));
-        REQUIRE(pt::Vec3::fromSpherical(0.0f, 0.0f) == pt::ApproxVec3(0.0f, 0.0f, 1.0f));
-        REQUIRE(pt::Vec3::fromSpherical(pt::pi<float> / 2.0f, 0.0f) == pt::ApproxVec3(1.0f, 0.0f, 0.0f));
-        REQUIRE(pt::Vec3::fromSpherical(pt::pi<float> / 2.0f, pt::pi<float> / 2.0f) == pt::ApproxVec3(0.0f, 1.0f, 0.0f));
+        CHECK(pt::Vec2::fromSpherical(0.0f) == pt::ApproxVec2(1.0f, 0.0f));
+        CHECK(pt::Vec2::fromSpherical(pt::pi<float> / 2.0f) == pt::ApproxVec2(0.0f, 1.0f));
+        CHECK(pt::Vec3::fromSpherical(0.0f, 0.0f) == pt::ApproxVec3(0.0f, 0.0f, 1.0f));
+        CHECK(pt::Vec3::fromSpherical(pt::pi<float> / 2.0f, 0.0f) == pt::ApproxVec3(1.0f, 0.0f, 0.0f));
+        CHECK(pt::Vec3::fromSpherical(pt::pi<float> / 2.0f, pt::pi<float> / 2.0f) == pt::ApproxVec3(0.0f, 1.0f, 0.0f));
     }
 
     SECTION("vec += vec") {
         pt::Vec2& c2 = (a2 += b2);
-        REQUIRE(a2 == pt::ApproxVec2(4.0f, 7.0f));
-        REQUIRE(&a2 == &c2);
+        CHECK(a2 == pt::ApproxVec2(4.0f, 7.0f));
+        CHECK(&a2 == &c2);
 
         pt::Vec3& c3 = (a3 += b3);
-        REQUIRE(a3 == pt::ApproxVec3(4.0f, 7.0f, 10.0f));
-        REQUIRE(&a3 == &c3);
+        CHECK(a3 == pt::ApproxVec3(4.0f, 7.0f, 10.0f));
+        CHECK(&a3 == &c3);
 
         pt::Vec4& c4 = (a4 += b4);
-        REQUIRE(a4 == pt::ApproxVec4(6.0f, 9.0f, 12.0f, 15.0f));
-        REQUIRE(&a4 == &c4);
+        CHECK(a4 == pt::ApproxVec4(6.0f, 9.0f, 12.0f, 15.0f));
+        CHECK(&a4 == &c4);
     }
     SECTION("vec -= vec") {
         pt::Vec2& c2 = (a2 -= b2);
-        REQUIRE(a2 == pt::ApproxVec2(-2.0f, -3.0f));
-        REQUIRE(&a2 == &c2);
+        CHECK(a2 == pt::ApproxVec2(-2.0f, -3.0f));
+        CHECK(&a2 == &c2);
 
         pt::Vec3& c3 = (a3 -= b3);
-        REQUIRE(a3 == pt::ApproxVec3(-2.0f, -3.0f, -4.0f));
-        REQUIRE(&a3 == &c3);
+        CHECK(a3 == pt::ApproxVec3(-2.0f, -3.0f, -4.0f));
+        CHECK(&a3 == &c3);
 
         pt::Vec4& c4 = (a4 -= b4);
-        REQUIRE(a4 == pt::ApproxVec4(-4.0f, -5.0f, -6.0f, -7.0f));
-        REQUIRE(&a4 == &c4);
+        CHECK(a4 == pt::ApproxVec4(-4.0f, -5.0f, -6.0f, -7.0f));
+        CHECK(&a4 == &c4);
     }
     SECTION("vec *= vec") {
         pt::Vec2& c2 = (a2 *= b2);
-        REQUIRE(a2 == pt::ApproxVec2(3.0f, 10.0f));
-        REQUIRE(&a2 == &c2);
+        CHECK(a2 == pt::ApproxVec2(3.0f, 10.0f));
+        CHECK(&a2 == &c2);
 
         pt::Vec3& c3 = (a3 *= b3);
-        REQUIRE(a3 == pt::ApproxVec3(3.0f, 10.0f, 21.0f));
-        REQUIRE(&a3 == &c3);
+        CHECK(a3 == pt::ApproxVec3(3.0f, 10.0f, 21.0f));
+        CHECK(&a3 == &c3);
 
         pt::Vec4& c4 = (a4 *= b4);
-        REQUIRE(a4 == pt::ApproxVec4(5.0f, 14.0f, 27.0f, 44.0f));
-        REQUIRE(&a4 == &c4);
+        CHECK(a4 == pt::ApproxVec4(5.0f, 14.0f, 27.0f, 44.0f));
+        CHECK(&a4 == &c4);
     }
     SECTION("vec *= scalar") {
         pt::Vec2& c2 = (a2 *= 3.0f);
-        REQUIRE(a2 == pt::ApproxVec2(3.0f, 6.0f));
-        REQUIRE(&a2 == &c2);
+        CHECK(a2 == pt::ApproxVec2(3.0f, 6.0f));
+        CHECK(&a2 == &c2);
 
         pt::Vec3& c3 = (a3 *= 3.0f);
-        REQUIRE(a3 == pt::ApproxVec3(3.0f, 6.0f, 9.0f));
-        REQUIRE(&a3 == &c3);
+        CHECK(a3 == pt::ApproxVec3(3.0f, 6.0f, 9.0f));
+        CHECK(&a3 == &c3);
 
         pt::Vec4& c4 = (a4 *= 3.0f);
-        REQUIRE(a4 == pt::ApproxVec4(3.0f, 6.0f, 9.0f, 12.0f));
-        REQUIRE(&a4 == &c4);
+        CHECK(a4 == pt::ApproxVec4(3.0f, 6.0f, 9.0f, 12.0f));
+        CHECK(&a4 == &c4);
     }
     SECTION("vec /= vec") {
         pt::Vec2& c2 = (a2 /= b2);
-        REQUIRE(a2 == pt::ApproxVec2(0.33333333333f, 0.4f));
-        REQUIRE(&a2 == &c2);
+        CHECK(a2 == pt::ApproxVec2(0.33333333333f, 0.4f));
+        CHECK(&a2 == &c2);
 
         pt::Vec3& c3 = (a3 /= b3);
-        REQUIRE(a3 == pt::ApproxVec3(0.33333333333f, 0.4f, 0.42857142857f));
-        REQUIRE(&a3 == &c3);
+        CHECK(a3 == pt::ApproxVec3(0.33333333333f, 0.4f, 0.42857142857f));
+        CHECK(&a3 == &c3);
 
         pt::Vec4& c4 = (a4 /= b4);
-        REQUIRE(a4 == pt::ApproxVec4(0.2f, 0.28571428571f, 0.33333333333f, 0.36363636363f));
-        REQUIRE(&a4 == &c4);
+        CHECK(a4 == pt::ApproxVec4(0.2f, 0.28571428571f, 0.33333333333f, 0.36363636363f));
+        CHECK(&a4 == &c4);
     }
     SECTION("vec /= scalar") {
         pt::Vec2& c2 = (a2 /= 3.0f);
-        REQUIRE(a2 == pt::ApproxVec2(0.33333333333f, 0.66666666666f));
-        REQUIRE(&a2 == &c2);
+        CHECK(a2 == pt::ApproxVec2(0.33333333333f, 0.66666666666f));
+        CHECK(&a2 == &c2);
 
         pt::Vec3& c3 = (a3 /= 3.0f);
-        REQUIRE(a3 == pt::ApproxVec3(0.33333333333f, 0.66666666666f, 1.0f));
-        REQUIRE(&a3 == &c3);
+        CHECK(a3 == pt::ApproxVec3(0.33333333333f, 0.66666666666f, 1.0f));
+        CHECK(&a3 == &c3);
 
         pt::Vec4& c4 = (a4 /= 3.0f);
-        REQUIRE(a4 == pt::ApproxVec4(0.33333333333f, 0.66666666666f, 1.0f, 1.33333333333f));
-        REQUIRE(&a4 == &c4);
+        CHECK(a4 == pt::ApproxVec4(0.33333333333f, 0.66666666666f, 1.0f, 1.33333333333f));
+        CHECK(&a4 == &c4);
     }
 
     SECTION("vec + vec") {
-        REQUIRE(a2 + b2 == pt::ApproxVec2(4.0f, 7.0f));
-        REQUIRE(a3 + b3 == pt::ApproxVec3(4.0f, 7.0f, 10.0f));
-        REQUIRE(a4 + b4 == pt::ApproxVec4(6.0f, 9.0f, 12.0f, 15.0f));
+        CHECK(a2 + b2 == pt::ApproxVec2(4.0f, 7.0f));
+        CHECK(a3 + b3 == pt::ApproxVec3(4.0f, 7.0f, 10.0f));
+        CHECK(a4 + b4 == pt::ApproxVec4(6.0f, 9.0f, 12.0f, 15.0f));
     }
     SECTION("-vec") {
-        REQUIRE(-a2 == pt::ApproxVec2(-1.0f, -2.0f));
-        REQUIRE(-a3 == pt::ApproxVec3(-1.0f, -2.0f, -3.0f));
-        REQUIRE(-a4 == pt::ApproxVec4(-1.0f, -2.0f, -3.0f, -4.0f));
+        CHECK(-a2 == pt::ApproxVec2(-1.0f, -2.0f));
+        CHECK(-a3 == pt::ApproxVec3(-1.0f, -2.0f, -3.0f));
+        CHECK(-a4 == pt::ApproxVec4(-1.0f, -2.0f, -3.0f, -4.0f));
     }
     SECTION("vec - vec") {
-        REQUIRE(a2 - b2 == pt::ApproxVec2(-2.0f, -3.0f));
-        REQUIRE(a3 - b3 == pt::ApproxVec3(-2.0f, -3.0f, -4.0f));
-        REQUIRE(a4 - b4 == pt::ApproxVec4(-4.0f, -5.0f, -6.0f, -7.0f));
+        CHECK(a2 - b2 == pt::ApproxVec2(-2.0f, -3.0f));
+        CHECK(a3 - b3 == pt::ApproxVec3(-2.0f, -3.0f, -4.0f));
+        CHECK(a4 - b4 == pt::ApproxVec4(-4.0f, -5.0f, -6.0f, -7.0f));
     }
     SECTION("vec * vec") {
-        REQUIRE(a2 * b2 == pt::ApproxVec2(3.0f, 10.0f));
-        REQUIRE(a3 * b3 == pt::ApproxVec3(3.0f, 10.0f, 21.0f));
-        REQUIRE(a4 * b4 == pt::ApproxVec4(5.0f, 14.0f, 27.0f, 44.0f));
+        CHECK(a2 * b2 == pt::ApproxVec2(3.0f, 10.0f));
+        CHECK(a3 * b3 == pt::ApproxVec3(3.0f, 10.0f, 21.0f));
+        CHECK(a4 * b4 == pt::ApproxVec4(5.0f, 14.0f, 27.0f, 44.0f));
     }
     SECTION("scalar * vec") {
-        REQUIRE(3.0f * a2 == pt::ApproxVec2(3.0f, 6.0f));
-        REQUIRE(3.0f * a3 == pt::ApproxVec3(3.0f, 6.0f, 9.0f));
-        REQUIRE(3.0f * a4 == pt::ApproxVec4(3.0f, 6.0f, 9.0f, 12.0f));
+        CHECK(3.0f * a2 == pt::ApproxVec2(3.0f, 6.0f));
+        CHECK(3.0f * a3 == pt::ApproxVec3(3.0f, 6.0f, 9.0f));
+        CHECK(3.0f * a4 == pt::ApproxVec4(3.0f, 6.0f, 9.0f, 12.0f));
     }
     SECTION("vec * scalar") {
-        REQUIRE(a2 * 3.0f == pt::ApproxVec2(3.0f, 6.0f));
-        REQUIRE(a3 * 3.0f == pt::ApproxVec3(3.0f, 6.0f, 9.0f));
-        REQUIRE(a4 * 3.0f == pt::ApproxVec4(3.0f, 6.0f, 9.0f, 12.0f));
+        CHECK(a2 * 3.0f == pt::ApproxVec2(3.0f, 6.0f));
+        CHECK(a3 * 3.0f == pt::ApproxVec3(3.0f, 6.0f, 9.0f));
+        CHECK(a4 * 3.0f == pt::ApproxVec4(3.0f, 6.0f, 9.0f, 12.0f));
     }
     SECTION("vec / vec") {
-        REQUIRE(a2 / b2 == pt::ApproxVec2(0.33333333333f, 0.4f));
-        REQUIRE(a3 / b3 == pt::ApproxVec3(0.33333333333f, 0.4f, 0.42857142857f));
-        REQUIRE(a4 / b4 == pt::ApproxVec4(0.2f, 0.28571428571f, 0.33333333333f, 0.36363636363f));
+        CHECK(a2 / b2 == pt::ApproxVec2(0.33333333333f, 0.4f));
+        CHECK(a3 / b3 == pt::ApproxVec3(0.33333333333f, 0.4f, 0.42857142857f));
+        CHECK(a4 / b4 == pt::ApproxVec4(0.2f, 0.28571428571f, 0.33333333333f, 0.36363636363f));
     }
     SECTION("vec / scalar") {
-        REQUIRE(a2 / 3.0f == pt::ApproxVec2(0.33333333333f, 0.66666666666f));
-        REQUIRE(a3 / 3.0f == pt::ApproxVec3(0.33333333333f, 0.66666666666f, 1.0f));
-        REQUIRE(a4 / 3.0f == pt::ApproxVec4(0.33333333333f, 0.66666666666f, 1.0f, 1.33333333333f));
+        CHECK(a2 / 3.0f == pt::ApproxVec2(0.33333333333f, 0.66666666666f));
+        CHECK(a3 / 3.0f == pt::ApproxVec3(0.33333333333f, 0.66666666666f, 1.0f));
+        CHECK(a4 / 3.0f == pt::ApproxVec4(0.33333333333f, 0.66666666666f, 1.0f, 1.33333333333f));
     }
 }
 
 
-TEST_CASE("Vector Functions") {
-    SECTION("dot") {
-        REQUIRE(pt::dot(pt::Vec2(2.0f, 3.0f), pt::Vec2(3.0f, 1.0f)) == pt::Approx(9.0f));
-        REQUIRE(pt::dot(pt::Vec3(2.0f, 3.0f, 4.0f), pt::Vec3(5.0f, 6.0f, 7.0f)) == pt::Approx(56.0f));
-        REQUIRE(pt::dot(pt::Vec4(2.0f, 3.0f, 4.0f, 5.0f), pt::Vec4(5.0f, 6.0f, 7.0f, 8.0f)) == pt::Approx(96.0f));
+// Vector functions
+TEST_CASE("dot") {
+    CHECK(pt::dot(pt::Vec2(2.0f, 3.0f), pt::Vec2(3.0f, 1.0f)) == pt::Approx(9.0f));
+    CHECK(pt::dot(pt::Vec3(2.0f, 3.0f, 4.0f), pt::Vec3(5.0f, 6.0f, 7.0f)) == pt::Approx(56.0f));
+    CHECK(pt::dot(pt::Vec4(2.0f, 3.0f, 4.0f, 5.0f), pt::Vec4(5.0f, 6.0f, 7.0f, 8.0f)) == pt::Approx(96.0f));
+}
+
+TEST_CASE("lengthSq") {
+    CHECK(pt::lengthSq(pt::Vec2(2.0f, 3.0f)) == pt::Approx(13.0f));
+    CHECK(pt::lengthSq(pt::Vec3(2.0f, 3.0f, 4.0f)) == pt::Approx(29.0f));
+    CHECK(pt::lengthSq(pt::Vec4(2.0f, 3.0f, 4.0f, 5.0f)) == pt::Approx(54.0f));
+}
+
+TEST_CASE("length") {
+    CHECK(pt::length(pt::Vec2(2.0f, 3.0f)) == pt::Approx(3.6055512754639892931192212674705f));
+    CHECK(pt::length(pt::Vec3(2.0f, 3.0f, 4.0f)) == pt::Approx(5.3851648071345040312507104915403f));
+    CHECK(pt::length(pt::Vec4(2.0f, 3.0f, 4.0f, 5.0f)) == pt::Approx(7.3484692283495342945918522241177f));
+}
+
+TEST_CASE("normalize") {
+    CHECK(pt::normalize(pt::Vec2(2.0f, 3.0f)) == pt::ApproxVec2(0.55470019622f, 0.83205029433f));
+    CHECK(pt::normalize(pt::Vec3(2.0f, 3.0f, 4.0f)) == pt::ApproxVec3(0.37139067635f, 0.55708601453f, 0.7427813527f));
+    CHECK(pt::normalize(pt::Vec4(2.0f, 3.0f, 4.0f, 5.0f)) == pt::ApproxVec4(0.27216552697f, 0.40824829046f, 0.54433105395f, 0.68041381744f));
+}
+
+TEST_CASE("isNormalized") {
+    CHECK(pt::isNormalized(pt::Vec2(0.55470019622f, 0.83205029433f)));
+    CHECK_FALSE(pt::isNormalized(pt::Vec2(1.55470019622f, 0.83205029433f)));
+
+    CHECK(pt::isNormalized(pt::Vec3(0.37139067635f, 0.55708601453f, 0.7427813527f)));
+    CHECK_FALSE(pt::isNormalized(pt::Vec3(1.37139067635f, 0.55708601453f, 0.7427813527f)));
+
+    CHECK(pt::isNormalized(pt::Vec4(0.27216552697f, 0.40824829046f, 0.54433105395f, 0.68041381744f)));
+    CHECK_FALSE(pt::isNormalized(pt::Vec4(1.27216552697f, 0.40824829046f, 0.54433105395f, 0.68041381744f)));
+}
+
+TEST_CASE("cross") {
+    auto vecA = pt::Vec3(1.0f, 0.0f, 0.0f);
+    auto vecB = pt::Vec3(0.0f, 0.0f, 1.0f);
+    auto vecC = pt::cross(vecB, vecA);
+
+    CHECK(vecC == pt::ApproxVec3(0.0f, 1.0f, 0.0f));
+    CHECK(pt::dot(vecA, vecC) == pt::Approx(0.0f));
+    CHECK(pt::dot(vecB, vecC) == pt::Approx(0.0f));
+    CHECK(pt::isNormalized(vecC));
+}
+
+TEST_CASE("reflect") {
+    auto normal = pt::Vec3(0.0f, 1.0f, 0.0f);
+    auto wo = pt::Vec3(-1.0f, 1.0f, 0.0f);
+    auto wi = pt::reflect(wo, normal);
+    CHECK(wi == pt::ApproxVec3(1.0f, 1.0f, 0.0f));
+    CHECK(pt::dot(wi, normal) == pt::Approx(pt::dot(wo, normal)));
+
+    wo = pt::normalize(wo);
+    wi = pt::reflect(wo, normal);
+    CHECK(wi == pt::ApproxVec3(0.7071067811865f, 0.7071067811865f, 0.0f));
+    CHECK(pt::dot(wi, normal) == pt::Approx(pt::dot(wo, normal)));
+    CHECK(pt::isNormalized(wi));
+}
+
+TEST_CASE("refract") {
+    auto normal = pt::Vec3(0.0f, 1.0f, 0.0f);
+    auto wi = pt::normalize(pt::Vec3(-1.0f, 1.0f, 0.0f));
+
+    float etaI = 1.333f; // Water
+    float etaT = 1.0f; // Air
+    float eta = etaI / etaT; // Water to Air
+
+    SECTION("Refraction Air To Air") {
+        pt::Vec3 wt;
+        bool tir = !pt::refract(wi, normal, 1.0f, wt);
+        CHECK_FALSE(tir);
+        CHECK(wt == pt::ApproxVec3(-wi.x, -wi.y, wi.z));
     }
 
-    SECTION("lengthSq") {
-        REQUIRE(pt::lengthSq(pt::Vec2(2.0f, 3.0f)) == pt::Approx(13.0f));
-        REQUIRE(pt::lengthSq(pt::Vec3(2.0f, 3.0f, 4.0f)) == pt::Approx(29.0f));
-        REQUIRE(pt::lengthSq(pt::Vec4(2.0f, 3.0f, 4.0f, 5.0f)) == pt::Approx(54.0f));
-    }
-
-    SECTION("length") {
-        REQUIRE(pt::length(pt::Vec2(2.0f, 3.0f)) == pt::Approx(3.6055512754639892931192212674705f));
-        REQUIRE(pt::length(pt::Vec3(2.0f, 3.0f, 4.0f)) == pt::Approx(5.3851648071345040312507104915403f));
-        REQUIRE(pt::length(pt::Vec4(2.0f, 3.0f, 4.0f, 5.0f)) == pt::Approx(7.3484692283495342945918522241177f));
-    }
-
-    SECTION("normalize") {
-        REQUIRE(pt::normalize(pt::Vec2(2.0f, 3.0f)) == pt::ApproxVec2(0.55470019622f, 0.83205029433f));
-        REQUIRE(pt::normalize(pt::Vec3(2.0f, 3.0f, 4.0f)) == pt::ApproxVec3(0.37139067635f, 0.55708601453f, 0.7427813527f));
-        REQUIRE(pt::normalize(pt::Vec4(2.0f, 3.0f, 4.0f, 5.0f)) == pt::ApproxVec4(0.27216552697f, 0.40824829046f, 0.54433105395f, 0.68041381744f));
-    }
-
-    SECTION("isNormalized") {
-        REQUIRE(pt::isNormalized(pt::Vec2(0.55470019622f, 0.83205029433f)));
-        REQUIRE_FALSE(pt::isNormalized(pt::Vec2(1.55470019622f, 0.83205029433f)));
-
-        REQUIRE(pt::isNormalized(pt::Vec3(0.37139067635f, 0.55708601453f, 0.7427813527f)));
-        REQUIRE_FALSE(pt::isNormalized(pt::Vec3(1.37139067635f, 0.55708601453f, 0.7427813527f)));
-
-        REQUIRE(pt::isNormalized(pt::Vec4(0.27216552697f, 0.40824829046f, 0.54433105395f, 0.68041381744f)));
-        REQUIRE_FALSE(pt::isNormalized(pt::Vec4(1.27216552697f, 0.40824829046f, 0.54433105395f, 0.68041381744f)));
-    }
-
-    SECTION("cross") {
-        auto vecA = pt::Vec3(1.0f, 0.0f, 0.0f);
-        auto vecB = pt::Vec3(0.0f, 0.0f, 1.0f);
-        auto vecC = pt::cross(vecB, vecA);
-
-        REQUIRE(vecC == pt::ApproxVec3(0.0f, 1.0f, 0.0f));
-        REQUIRE(pt::dot(vecA, vecC) == pt::Approx(0.0f));
-        REQUIRE(pt::dot(vecB, vecC) == pt::Approx(0.0f));
-        REQUIRE(pt::isNormalized(vecC));
-    }
-
-    SECTION("reflect") {
-        auto normal = pt::Vec3(0.0f, 1.0f, 0.0f);
-        auto wo = pt::Vec3(-1.0f, 1.0f, 0.0f);
-        auto wi = pt::reflect(wo, normal);
-        REQUIRE(wi == pt::ApproxVec3(1.0f, 1.0f, 0.0f));
-        REQUIRE(pt::dot(wi, normal) == pt::Approx(pt::dot(wo, normal)));
-
-        wo = pt::normalize(wo);
-        wi = pt::reflect(wo, normal);
-        REQUIRE(wi == pt::ApproxVec3(0.7071067811865f, 0.7071067811865f, 0.0f));
-        REQUIRE(pt::dot(wi, normal) == pt::Approx(pt::dot(wo, normal)));
-        REQUIRE(pt::isNormalized(wi));
-    }
-
-    SECTION("refract") {
-        auto normal = pt::Vec3(0.0f, 1.0f, 0.0f);
-        auto wi = pt::normalize(pt::Vec3(-1.0f, 1.0f, 0.0f));
-        float etaI = 1.333f; // Water
-        float etaT = 1.0f; // Air
-        float eta = etaI / etaT;
+    SECTION("Refraction From Water to Air") {
         pt::Vec3 wt;
         bool tir = !pt::refract(wi, normal, eta, wt);
+        CHECK_FALSE(tir);
+        CHECK(pt::dot(wt, normal) < 0.0f);
 
         float angleOfIncidence = std::acos(pt::abs(pt::dot(wi, normal)));
-        float angleOfRefraction = std::acos(pt::abs(pt::dot(wt, normal)));
         float expectedAngleOfIncidence = static_cast<float>(pt::radians(45.0));
-        float expectedAngleOfRefraction = static_cast<float>(pt::radians(70.4883056));
-        REQUIRE(angleOfIncidence == pt::Approx(expectedAngleOfIncidence).epsilon(1e-5f));
-        REQUIRE(angleOfRefraction == pt::Approx(expectedAngleOfRefraction).epsilon(1e-5f));
-        REQUIRE_FALSE(tir);
-        REQUIRE(pt::dot(wt, normal) < 0.0f);
+        CHECK(angleOfIncidence == pt::Approx(expectedAngleOfIncidence).epsilon(1e-5f));
 
+        float angleOfRefraction = std::acos(pt::abs(pt::dot(wt, normal)));
+        float expectedAngleOfRefraction = static_cast<float>(pt::radians(70.4883056));
+        CHECK(angleOfRefraction == pt::Approx(expectedAngleOfRefraction).epsilon(1e-5f));
+    }
+
+    SECTION("Total Internal Reflection From Water to Air") {
         float expectedCriticalAngle = static_cast<float>(pt::radians(90.0 - 48.6066264));
         wi.x = -std::cos(expectedCriticalAngle + pt::testEps<float>);
         wi.y = std::sin(expectedCriticalAngle + pt::testEps<float>);
-        tir = !pt::refract(wi, normal, eta, wt);
-        REQUIRE_FALSE(tir);
+
+        pt::Vec3 wt;
+        bool tir = !pt::refract(wi, normal, eta, wt);
+        CHECK_FALSE(tir);
 
         wi.x = -std::cos(expectedCriticalAngle - pt::testEps<float>);
         wi.y = std::sin(expectedCriticalAngle - pt::testEps<float>);
         tir = !pt::refract(wi, normal, eta, wt);
-        REQUIRE(tir);
+        CHECK(tir);
     }
 }
 
@@ -452,36 +466,36 @@ TEST_CASE("Matrix Operators & Functions") {
             pt::Vec4(3.0f, 7.0f, 11.0f, 15.0f),
             pt::Vec4(4.0f, 8.0f, 12.0f, 16.0f));
 
-        REQUIRE(a._11 == pt::Approx(1.0f));
-        REQUIRE(a._12 == pt::Approx(2.0f));
-        REQUIRE(a._13 == pt::Approx(3.0f));
-        REQUIRE(a._14 == pt::Approx(4.0f));
-        REQUIRE(a._21 == pt::Approx(5.0f));
-        REQUIRE(a._22 == pt::Approx(6.0f));
-        REQUIRE(a._23 == pt::Approx(7.0f));
-        REQUIRE(a._24 == pt::Approx(8.0f));
-        REQUIRE(a._31 == pt::Approx(9.0f));
-        REQUIRE(a._32 == pt::Approx(10.0f));
-        REQUIRE(a._33 == pt::Approx(11.0f));
-        REQUIRE(a._34 == pt::Approx(12.0f));
-        REQUIRE(a._41 == pt::Approx(13.0f));
-        REQUIRE(a._42 == pt::Approx(14.0f));
-        REQUIRE(a._43 == pt::Approx(15.0f));
-        REQUIRE(a._44 == pt::Approx(16.0f));
+        CHECK(a._11 == pt::Approx(1.0f));
+        CHECK(a._12 == pt::Approx(2.0f));
+        CHECK(a._13 == pt::Approx(3.0f));
+        CHECK(a._14 == pt::Approx(4.0f));
+        CHECK(a._21 == pt::Approx(5.0f));
+        CHECK(a._22 == pt::Approx(6.0f));
+        CHECK(a._23 == pt::Approx(7.0f));
+        CHECK(a._24 == pt::Approx(8.0f));
+        CHECK(a._31 == pt::Approx(9.0f));
+        CHECK(a._32 == pt::Approx(10.0f));
+        CHECK(a._33 == pt::Approx(11.0f));
+        CHECK(a._34 == pt::Approx(12.0f));
+        CHECK(a._41 == pt::Approx(13.0f));
+        CHECK(a._42 == pt::Approx(14.0f));
+        CHECK(a._43 == pt::Approx(15.0f));
+        CHECK(a._44 == pt::Approx(16.0f));
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
-                REQUIRE(a.data[i][j] == pt::Approx(static_cast<float>(j + i * 4 + 1)));
-                REQUIRE(a.data[i][j] == pt::Approx(a[i][j]));
-                REQUIRE(a.rows[i][j] == pt::Approx(a[i][j]));
-                REQUIRE(a[i][j] == pt::Approx(rows[i][j]));
-                REQUIRE(a[i][j] == pt::Approx(cols[i][j]));
+                CHECK(a.data[i][j] == pt::Approx(static_cast<float>(j + i * 4 + 1)));
+                CHECK(a.data[i][j] == pt::Approx(a[i][j]));
+                CHECK(a.rows[i][j] == pt::Approx(a[i][j]));
+                CHECK(a[i][j] == pt::Approx(rows[i][j]));
+                CHECK(a[i][j] == pt::Approx(cols[i][j]));
 
                 if (i == j) {
-                    REQUIRE(diag[i][j] == pt::Approx(4.0f));
+                    CHECK(diag[i][j] == pt::Approx(4.0f));
                 }
                 else {
-                    REQUIRE(diag[i][j] == pt::Approx(0.0f));
+                    CHECK(diag[i][j] == pt::Approx(0.0f));
                 }
             }
         }
@@ -493,11 +507,11 @@ TEST_CASE("Matrix Operators & Functions") {
             618.0f, 644.0f, 670.0f, 696.f,
             986.0f, 1028.0f, 1070.0f, 1112.0f,
             1354.0f, 1412.0f, 1470.0f, 1528.0f);
-        REQUIRE(a * b == expected);
+        CHECK(a * b == expected);
 
         pt::Mat4& c = (a *= b);
-        REQUIRE(a == expected);
-        REQUIRE(&a == &c);
+        CHECK(a == expected);
+        CHECK(&a == &c);
     }
 
     SECTION("mat * scalar, scalar * mat, mat *= scalar") {
@@ -506,12 +520,12 @@ TEST_CASE("Matrix Operators & Functions") {
             10.0f, 12.0f, 14.0f, 16.f,
             18.0f, 20.0f, 22.0f, 24.0f,
             26.0f, 28.0f, 30.0f, 32.0f);
-        REQUIRE(a * 2.0f == expected);
-        REQUIRE(2.0f * a == expected);
+        CHECK(a * 2.0f == expected);
+        CHECK(2.0f * a == expected);
 
         pt::Mat4& c = (a *= 2.0f);
-        REQUIRE(a == expected);
-        REQUIRE(&a == &c);
+        CHECK(a == expected);
+        CHECK(&a == &c);
     }
 
     SECTION("transpose") {
