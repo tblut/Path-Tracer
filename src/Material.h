@@ -8,7 +8,7 @@ class Material {
 public:
     Material(const Vec3& baseColor, float specular,
         float roughness, float metalness,
-        float transmission = 0.0f,
+        float transmission = 0.0f, float ior = 1.0f,
         const Vec3& emittance = Vec3(0.0f));
 
     // All vectors are expected to be in local space
@@ -22,6 +22,7 @@ public:
     float getRoughness() const { return roughness_; }
     float getMetalness() const { return metalness_; }
     float getTransmission() const { return transmission_; }
+    float getIOR() const { return ior_; }
     const Vec3& getEmittance() const { return emittance_; }
 
 private:
@@ -30,6 +31,7 @@ private:
     float roughness_;
     float metalness_;
     float transmission_;
+    float ior_;
     Vec3 emittance_;
 
     // Precomputed values

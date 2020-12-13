@@ -21,11 +21,23 @@ inline bool sameHemisphere(const Vec3& w, const Vec3& wp) {
 }
 
 
-inline Vec3 Fr_Schlick(const Vec3& wh, const Vec3& wi, const Vec3& f0) {
-    float a = 1.0f - dot(wh, wi);
+inline Vec3 Fr_Schlick(float cosThetaI, const Vec3& f0) {
+    float a = 1.0f - cosThetaI;
     float a2 = a * a;
     float a5 = a2 * a2 * a;
     return f0 + (Vec3(1.0f) - f0) * a5;
+}
+
+inline float Fr_Dielectric(float cosThetaI, float eta) {
+    float cosTheta2_T = 1.0f - (1.0f - cosThetaI * cosThetaI) / (eta * eta);
+    if (cosTheta2_T <= 0.0f) {
+        return 1.0f; // Total internal reflection
+    }
+
+    float cosThetaT = std::sqrt(cosTheta2_T);
+    float r_parallel = (cosThetaI - eta * cosThetaT) / (cosThetaI + eta * cosThetaT);
+    float r_perpendicular = (cosThetaT - eta * cosThetaI) / (cosThetaT + eta * cosThetaI);
+    return 0.5f * (r_parallel * r_parallel + r_perpendicular * r_perpendicular);
 }
 
 inline float D_GGX(const Vec3& wh, float alpha) {
@@ -45,8 +57,8 @@ inline float G1_Smith_GGX(const Vec3& w, const Vec3& wh, float alpha) {
     }
 
     float alpha2 = alpha * alpha;
-    float cosTheta2_W = cosTheta2(w);
-    float lambda = (-1.0f + std::sqrt(alpha2 * (1.0f - cosTheta2_W) / cosTheta2_W + 1.0f)) / 2.0f;
+    float cos2ThetaW = cosTheta2(w);
+    float lambda = (-1.0f + std::sqrt(alpha2 * (1.0f - cos2ThetaW) / cos2ThetaW + 1.0f)) / 2.0f;
     return 1.0f / (1.0f + lambda);
 }
 
@@ -59,14 +71,14 @@ inline float G2_SmithHeightCorrelated_GGX(const Vec3& wi, const Vec3& wo, const 
         return 0.0f;
     }
 
-    float cosTheta2_O = cosTheta2(wo);
-    float cosTheta2_I = cosTheta2(wi);
-    assert(cosTheta2_O > 0.0f);
-    assert(cosTheta2_I > 0.0f);
+    float cos2ThetaO = cosTheta2(wo);
+    float cos2ThetaI = cosTheta2(wi);
+    assert(cos2ThetaO > 0.0f);
+    assert(cos2ThetaI > 0.0f);
 
     float alpha2 = alpha * alpha;
-    float lambda_wo = (-1.0f + std::sqrt(alpha2 * (1.0f - cosTheta2_O) / cosTheta2_O + 1.0f)) / 2.0f;
-    float lambda_wi = (-1.0f + std::sqrt(alpha2 * (1.0f - cosTheta2_I) / cosTheta2_I + 1.0f)) / 2.0f;
+    float lambda_wo = (-1.0f + std::sqrt(alpha2 * (1.0f - cos2ThetaO) / cos2ThetaO + 1.0f)) / 2.0f;
+    float lambda_wi = (-1.0f + std::sqrt(alpha2 * (1.0f - cos2ThetaI) / cos2ThetaI + 1.0f)) / 2.0f;
     return 1.0f / (1.0f + lambda_wo + lambda_wi);
 }
 
@@ -80,9 +92,12 @@ inline Vec3 diffuse_Lambert(const Vec3& diffuseColor) {
     return diffuseColor / pi<float>;
 }
 
-inline Vec3 specular_GGX(const Vec3& wo, const Vec3& wi, const Vec3& f0, float alpha) {
-    Vec3 wh = normalize(wo + wi);
-    Vec3 F = Fr_Schlick(wh, wi, f0);
+inline Vec3 microfacetReflection_GGX(const Vec3& wi, const Vec3& wo, const Vec3& f0, float alpha) {
+    if (!sameHemisphere(wi, wo)) {
+        return Vec3(0.0f);
+    }
+
+    Vec3 wh = normalize(wi + wo);
     float cosThetaO = cosTheta(wo);
     float cosThetaI = cosTheta(wi);
     float cosThetaH = cosTheta(wh);
@@ -94,16 +109,45 @@ inline Vec3 specular_GGX(const Vec3& wo, const Vec3& wi, const Vec3& f0, float a
     assert(cosThetaI > 0.0f);
     assert(cosThetaH > 0.0f);
 
+    Vec3 F = Fr_Schlick(dot(wh, wi), f0);
     float G = G2_SmithHeightCorrelated_GGX(wi, wo, wh, alpha);
     float D = D_GGX(wh, alpha);
     return F * G * D / (4.0f * cosThetaO * cosThetaI);
 }
 
+inline float microfacetTransmission_GGX(const Vec3& wi, const Vec3& wo, float eta, float alpha) {
+    if (sameHemisphere(wi, wo)) {
+        return 0.0f;
+    }
+
+    Vec3 wh = normalize(eta * wi + wo);
+    float F = Fr_Dielectric(dot(wh, wi), eta);
+    float G = G2_SmithHeightCorrelated_GGX(wi, wo, wh, alpha);
+    float D = D_GGX(wh, alpha);
+
+    float denomSqrt = eta * dot(wi, wh) + dot(wo, wh);
+    return D * G * (1.0f - F) * abs(dot(wi, wh)) * abs(dot(wo, wh))
+        / (denomSqrt * denomSqrt * cosTheta(wo) * cosTheta(wi));
+}
+
+
+inline Vec3 sampleUniformSphere(float u1, float u2) {
+    float cosTheta = 1.0f - 2.0f * u1;
+    float sinTheta = std::sqrt(1.0f - cosTheta * cosTheta);
+    float phi = 2.0f * pi<float> * u2;
+    return Vec3(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
+}
+
+inline float pdfUniformSphere(const Vec3& wi, const Vec3& wo) {
+    return 1.0f / (4.0f * pi<float>);
+}
+
 
 inline Vec3 sampleCosineHemisphere(float u1, float u2) {
-    float r = std::sqrt(u1);
-    float phi = 2.0f * pi<float> *u2;
-    return Vec3(r * std::sin(phi), r * std::cos(phi), std::sqrt(1.0f - u1));
+    float cosTheta = std::sqrt(1.0f - u1);
+    float sinTheta = std::sqrt(u1);
+    float phi = 2.0f * pi<float> * u2;
+    return Vec3(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
 }
 
 inline float pdfCosineHemisphere(const Vec3& wi, const Vec3& wo) {
@@ -119,15 +163,36 @@ inline Vec3 sampleGGX(float alpha, float u1, float u2) {
     return wh;
 }
 
-inline float pdfGGX(const Vec3& wi, const Vec3& wo, float alpha) {
+inline float pdfGGX_reflection(const Vec3& wi, const Vec3& wo, float alpha) {
     if (!sameHemisphere(wi, wo)) {
         return 0.0f;
     }
 
     Vec3 wh = normalize(wi + wo);
     float pdf_h = D_GGX(wh, alpha) * abs(cosTheta(wh));
-    float dwh_dwi = 4.0f * dot(wo, wh);
-    return pdf_h / dwh_dwi;
+    float dwh_dwi = 1.0f / (4.0f * dot(wi, wh));
+    return pdf_h * dwh_dwi;
+}
+
+inline float pdfGGX_transmission(const Vec3& wi, const Vec3& wo, float etaI, float etaO, float alpha) {
+    if (sameHemisphere(wi, wo)) {
+        return 0.0f;
+    }
+
+    Vec3 wh = normalize(etaI * wi + etaO * wo);
+    float cosThetaH = cosTheta(wh);
+    float cosThetaO = cosTheta(wo);
+    float cosThetaI = cosTheta(wi);
+    float dotOH = dot(wo, wh);
+    float dotIH = dot(wi, wh);
+    if (dot(wo, wh) * dot(wi, wh) > 0.0f) {
+        return 0.0f;
+    }
+
+    float pdf_h = D_GGX(wh, alpha) * abs(cosTheta(wh));
+    float sqrtDenom = etaI * dot(wi, wh) + etaO * dot(wo, wh);
+    float dwh_dwi = etaO * etaO * abs(dot(wo, wh)) / (sqrtDenom * sqrtDenom);
+    return pdf_h * dwh_dwi;
 }
 
 
@@ -158,15 +223,26 @@ inline Vec3 sampleGGX_VNDF(const Vec3& wo, float alpha, float u1, float u2) {
     return normalize(Vec3(alpha * whHemi.x, alpha * whHemi.y, max(0.0f, whHemi.z)));
 }
 
-inline float pdfGGX_VNDF(const Vec3& wi, const Vec3& wo, float alpha) {
+inline float pdfGGX_VNDF_reflection(const Vec3& wi, const Vec3& wo, float alpha) {
     if (!sameHemisphere(wi, wo)) {
         return 0.0f;
     }
 
     Vec3 wh = normalize(wi + wo);
-    float dotHO = dot(wh, wo);
-    float pdf_h = G1_Smith_GGX(wo, wh, alpha) * D_GGX(wh, alpha) * dotHO / abs(cosTheta(wo));
-    float dwh_dwi = 4.0f * dotHO;
+    float pdf_h = G1_Smith_GGX(wo, wh, alpha) * D_GGX(wh, alpha) * dot(wh, wo) / abs(cosTheta(wo));
+    float dwh_dwi = 4.0f * dot(wh, wi);
+    return pdf_h / dwh_dwi;
+}
+
+inline float pdfGGX_VNDF_transmission(const Vec3& wi, const Vec3& wo, float eta, float alpha) {
+    if (sameHemisphere(wi, wo)) {
+        return 0.0f;
+    }
+
+    Vec3 wh = normalize(eta * wi + wo);
+    float pdf_h = G1_Smith_GGX(wo, wh, alpha) * D_GGX(wh, alpha) * dot(wh, wo) / abs(cosTheta(wo));
+    float sqrtDenom = eta * dot(wi, wh) + dot(wo, wh);
+    float dwh_dwi = eta * eta * dot(wi, wh) / (sqrtDenom * sqrtDenom);
     return pdf_h / dwh_dwi;
 }
 
