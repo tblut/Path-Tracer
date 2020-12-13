@@ -151,7 +151,7 @@ TEST_CASE("GGX Normal Distribution (D Term)") {
     }
 }
 
-
+/*
 TEST_CASE("Uniform Sphere Sampling") {
     testBxdfGoodnessOfFit(
         [](const pt::Vec3& wi, const pt::Vec3& wo) {
@@ -183,9 +183,15 @@ TEST_CASE("GGX Reflection Sampling") {
             },
             [&](const pt::Vec3& wo, float u1, float u2) {
                 pt::Vec3 wh = pt::sampleGGX(alpha, u1, u2);
-                if (pt::dot(wo, wh) < 0.0f) return pt::Vec3(0.0f);
+                if (pt::dot(wo, wh) < 0.0f) {
+                    return pt::Vec3(0.0f);
+                }
+
                 pt::Vec3 wi = pt::reflect(wo, wh);
-                if (!pt::sameHemisphere(wi, wo)) return pt::Vec3(0.0f);
+                if (!pt::sameHemisphere(wi, wo)) {
+                    return pt::Vec3(0.0f);
+                }
+
                 return wi;
             });
     }
@@ -201,59 +207,54 @@ TEST_CASE("GGX VNDF Reflection Sampling") {
             },
             [&](const pt::Vec3& wo, float u1, float u2) {
                 pt::Vec3 wh = pt::sampleGGX_VNDF(wo, alpha, u1, u2);
-                if (pt::dot(wo, wh) < 0.0f) return pt::Vec3(0.0f);
+                if (pt::dot(wo, wh) < 0.0f) {
+                    return pt::Vec3(0.0f);
+                }
+
                 pt::Vec3 wi = pt::reflect(wo, wh);
-                if (!pt::sameHemisphere(wi, wo)) return pt::Vec3(0.0f);
+                if (!pt::sameHemisphere(wi, wo)) {
+                    return pt::Vec3(0.0f);
+                }
+
                 return wi;
             });
     }
 }
+*/
 
 
 TEST_CASE("GGX Transmission Sampling") {
-    for (int theta = 0; theta <= 180; theta++) {
-        auto wh = pt::Vec3::fromSpherical(pt::radians((float)theta), pt::radians(0.0f));
-        pt::Vec3 wt;
-        bool b = pt::refract({ 1, 0, 0 }, pt::normalize(pt::Vec3{ 1.f, 1.f, 0.f }), 1.0f, wt);
-        assert(b);
-    }
-    pt::Vec3 wt;
-    bool b = pt::refract({ 1, 0, 0 }, pt::normalize(pt::Vec3{ -1.f, 0.f, 0.f }), 1.0f, wt);
-
     constexpr float etaI = 1.0f;
-    constexpr float etaT = 1.0f;
+    constexpr float etaT = 1.5f;
 
     for (int i = 0; i < 20; i++) {
         float alpha = 0.01f + (i / 20.0f) * (1.0f - 0.01f);
         testBxdfGoodnessOfFit(
             [&](const pt::Vec3& wi, const pt::Vec3& wo) {
-                //float eta = pt::cosTheta(wo) > 0.0f ? etaT / etaI : etaI / etaT;
-                float pdf =  pt::pdfGGX_transmission(wi, wo, etaI, etaT, alpha);
+                float eta = pt::cosTheta(wo) < 0.0f ? etaT / etaI : etaI / etaT;
+                float pdf =  pt::pdfGGX_transmission(wi, wo, eta, alpha);
                 assert(pdf >= 0.0f);
                 return pdf;
             },
             [&](const pt::Vec3& wo, float u1, float u2) {
-                //float eta = pt::cosTheta(wo) > 0.0f ? etaT / etaI : etaI / etaT;
                 pt::Vec3 wh = pt::sampleGGX(alpha, u1, u2);
                 if (pt::cosTheta(wo) < 0.0f) wh = -wh;
                 if (pt::dot(wo, wh) < 0.0f) return pt::Vec3(0.0f);
                 assert(pt::sameHemisphere(wh, wo));
                 assert(pt::dot(wo, wh) >= 0.0f);
 
+                float eta = pt::cosTheta(wo) < 0.0f ? etaT / etaI : etaI / etaT;
+
                 pt::Vec3 wi;
-                bool tir = !pt::refract(wo, wh, 1.0f, wi);
-                if (tir || pt::sameHemisphere(wi, wo)) return pt::Vec3(0.0f);
-                /*if (tir) {
-                    wi = pt::reflect(wo, wh);
-                    if (!pt::sameHemisphere(wi, wo)) return pt::Vec3(0.0f);
-                    assert(pt::sameHemisphere(wh, wi));
-                    assert(pt::sameHemisphere(wi, wo));
+                if (!pt::refract(wo, wh, eta, wi)) {
+                    return pt::Vec3(0.0f);
                 }
-                else {
-                    assert(!pt::sameHemisphere(wh, wi));
-                    if (pt::sameHemisphere(wi, wo)) return pt::Vec3(0.0f);
-                    assert(!pt::sameHemisphere(wi, wo));
-                }*/
+                if (pt::sameHemisphere(wi, wo)) {
+                    return pt::Vec3(0.0f);
+                }
+
+                pt::Vec3 wh_2 = pt::normalize(wi + eta * wo);
+
                 return wi;
             });
     }

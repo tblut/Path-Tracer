@@ -41,9 +41,9 @@ inline float Fr_Dielectric(float cosThetaI, float eta) {
 }
 
 inline float D_GGX(const Vec3& wh, float alpha) {
-    float cosThetaH = cosTheta(wh);
+    float cosThetaH = abs(cosTheta(wh));
     if (cosThetaH <= 0.0f) {
-        return 0.0f;
+        //return 0.0f;
     }
 
     float alpha2 = alpha * alpha;
@@ -174,24 +174,24 @@ inline float pdfGGX_reflection(const Vec3& wi, const Vec3& wo, float alpha) {
     return pdf_h * dwh_dwi;
 }
 
-inline float pdfGGX_transmission(const Vec3& wi, const Vec3& wo, float etaI, float etaO, float alpha) {
+inline float pdfGGX_transmission(const Vec3& wi, const Vec3& wo, float eta, float alpha) {
     if (sameHemisphere(wi, wo)) {
         return 0.0f;
     }
 
-    Vec3 wh = normalize(etaI * wi + etaO * wo);
-    float cosThetaH = cosTheta(wh);
-    float cosThetaO = cosTheta(wo);
-    float cosThetaI = cosTheta(wi);
-    float dotOH = dot(wo, wh);
-    float dotIH = dot(wi, wh);
+    Vec3 wh = normalize(wi + eta * wo);
     if (dot(wo, wh) * dot(wi, wh) > 0.0f) {
         return 0.0f;
     }
 
+    float a = dot(wh, wo);
+    float b = dot(wh, wi);
+
+    //assert(dot(wi, wh) > 0.0f);
+
     float pdf_h = D_GGX(wh, alpha) * abs(cosTheta(wh));
-    float sqrtDenom = etaI * dot(wi, wh) + etaO * dot(wo, wh);
-    float dwh_dwi = etaO * etaO * abs(dot(wo, wh)) / (sqrtDenom * sqrtDenom);
+    float sqrtDenom = dot(wi, wh) + eta * dot(wo, wh);
+    float dwh_dwi = abs(dot(wi, wh)) / (sqrtDenom * sqrtDenom);
     return pdf_h * dwh_dwi;
 }
 
