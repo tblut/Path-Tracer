@@ -20,6 +20,11 @@ inline bool sameHemisphere(const Vec3& w, const Vec3& wp) {
 }
 
 
+inline Vec3 schlickF0FromRelativeIOR(float eta) {
+    float a = (1 - eta) / (1 + eta);
+    return Vec3(a * a);
+}
+
 inline Vec3 Fr_Schlick(float cosThetaI, const Vec3& f0) {
     float a = max(0.0f, 1.0f - cosThetaI);
     float a2 = a * a;
@@ -79,41 +84,52 @@ inline Vec3 diffuse_Lambert(const Vec3& diffuseColor) {
 }
 
 inline Vec3 microfacetReflection_GGX(const Vec3& wi, const Vec3& wo, const Vec3& f0, float alpha) {
-    if (!sameHemisphere(wi, wo)) {
+    if (!sameHemisphere(wi, wo) || cosTheta(wi) == 0.0f || cosTheta(wo) == 0.0f) {
         return Vec3(0.0f);
     }
 
-    Vec3 wh = normalize(wi + wo);
-    float cosThetaO = cosTheta(wo);
-    float cosThetaI = cosTheta(wi);
-    float cosThetaH = cosTheta(wh);
-
-    if (cosThetaO <= 0.0f || cosThetaI <= 0.0f || cosThetaH <= 0.0f) {
+    Vec3 wh = wi + wo;
+    if (wh.x == 0 && wh.y == 0 && wh.z == 0) {
         return Vec3(0.0f);
     }
-    assert(cosThetaO > 0.0f);
-    assert(cosThetaI > 0.0f);
-    assert(cosThetaH > 0.0f);
+    wh = normalize(wh);
 
-    Vec3 F = Fr_Schlick(dot(wh, wi), f0);
+    Vec3 F = Fr_Schlick(abs(dot(wh, wi)), f0);
     float G = G2_SmithHeightCorrelated_GGX(wi, wo, alpha);
     float D = D_GGX(wh, alpha);
-    return F * G * D / (4.0f * cosThetaO * cosThetaI);
+    return F * G * D / (4.0f * abs(cosTheta(wi)) * abs(cosTheta(wo)));
 }
 
-inline float microfacetTransmission_GGX(const Vec3& wi, const Vec3& wo, float eta, float alpha) {
-    if (sameHemisphere(wi, wo)) {
-        return 0.0f;
+inline Vec3 microfacetTransmission_GGX(const Vec3& wi, const Vec3& wo, float eta, float alpha) {
+    if (sameHemisphere(wi, wo) || cosTheta(wi) == 0.0f || cosTheta(wo) == 0.0f) {
+        return Vec3(0.0f);
     }
 
-    Vec3 wh = normalize(eta * wi + wo);
-    float F = Fr_Dielectric(dot(wh, wi), eta);
+    Vec3 wh = normalize(wi + eta * wo);
+    if (cosTheta(wh) < 0.0f) {
+        wh = -wh;
+    }
+
+    bool sameSide = dot(wo, wh) * dot(wi, wh) > 0.0f;
+    if (sameSide) {
+        return Vec3(0.0f);
+    }
+
+    Vec3 F;
+    if (eta < 1.0f) {
+        float cosThetaT = dot(wi, wh);
+        float cos2ThetaT = cosThetaT * cosThetaT;
+        F = cos2ThetaT > 0.0f ? Fr_Schlick(cos2ThetaT, schlickF0FromRelativeIOR(eta)) : Vec3(1.0f);
+    }
+    else {
+        F = Fr_Schlick(abs(dot(wh, wo)), schlickF0FromRelativeIOR(eta));
+    }
+
     float G = G2_SmithHeightCorrelated_GGX(wi, wo, alpha);
     float D = D_GGX(wh, alpha);
-
-    float denomSqrt = eta * dot(wi, wh) + dot(wo, wh);
-    return D * G * (1.0f - F) * abs(dot(wi, wh)) * abs(dot(wo, wh))
-        / (denomSqrt * denomSqrt * cosTheta(wo) * cosTheta(wi));
+    float denomSqrt = dot(wi, wh) + eta * dot(wo, wh);
+    return (Vec3(1.0f) - F) * D * G * abs(dot(wi, wh)) * abs(dot(wo, wh))
+        / (denomSqrt * denomSqrt * abs(cosTheta(wi)) * abs(cosTheta(wo)));
 }
 
 

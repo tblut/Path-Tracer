@@ -23,7 +23,8 @@ Material::Material(const Vec3& baseColor, float specular, float roughness,
 }
 
 Vec3 Material::evaluate(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {
-    float eta = cosTheta(wo) > 0.0f ? 1.0f / ior_ : ior_;
+    bool entering = cosTheta(wo) > 0.0f;
+    float eta = entering ? 1.0f / ior_ : ior_;
     return diffuse_Lambert(kD_) + microfacetReflection_GGX(wi, wo, kS_, alpha_)
         + baseColor_ * microfacetTransmission_GGX(wi, wo, eta, alpha_);
 }
@@ -53,7 +54,11 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
                 0.0f, oneMinusEpsilon<float>);
 
             Vec3 wh = sampleGGX_VNDF(wo, alpha_, u1, u2);
-            wi = reflect(wo, wh);
+            if (pt::dot(wo, wh) < 0.0f) {
+                return pt::Vec3(0.0f);
+            }
+
+            wi = normalize(reflect(wo, wh));
             assert(isNormalized(wh));
             assert(isNormalized(wi));
             assert(dot(wh, wo) >= 0.0f);
@@ -66,26 +71,43 @@ Vec3 Material::sampleDirection(const Vec3& wo, const Vec3& normal,
         return wi;
     }
     else {
-        float eta;
-        Vec3 wh;
-        if (cosTheta(wo) > 0.0f) {
-            eta = 1.0f / ior_;
-            wh = sampleGGX_VNDF(wo, alpha_, u1, u2);
+        bool entering = cosTheta(wo) > 0.0f;
+        float eta = entering ? 1.0f / ior_ : ior_;
+        Vec3 wh = sampleGGX_VNDF(entering ? wo : -wo, alpha_, u1, u2);
+
+        if (!pt::sameHemisphere(wo, wh)) {
+            wh = -wh;
         }
-        else {
-            eta = ior_;
-            wh = -sampleGGX_VNDF(-wo, alpha_, u1, u2);
+        if (pt::dot(wo, wh) < 0.0f) {
+            return pt::Vec3(0.0f);
         }
 
         Vec3 wi;
-        bool tir = !refract(wo, wh, eta, wi);
-        if (tir) {
-            wi = reflect(wo, wh);
+        if (!refract(wo, wh, eta, wi)) {
+            wi = normalize(reflect(wo, wh));
+
+            if (!sameHemisphere(wi, wo)) {
+                return Vec3(0.0f);
+            }
+        }
+        else {
+            wi = normalize(wi);
+            if (sameHemisphere(wi, wo)) {
+                return Vec3(0.0f);
+            }
+            if (dot(wo, wh) * dot(wi, wh) > 0.0f) {
+                return pt::Vec3(0.0f);
+            }
+            if (cosTheta(wi) == 0.0f || cosTheta(wo) == 0.0f) {
+                return pt::Vec3(0.0f);
+            }
         }
 
         if (pdf) {
             // One term will always be 0
-            *pdf = pdfGGX_VNDF_reflection(wi, wo, alpha_) + pdfGGX_VNDF_transmission(wi, wo, eta, alpha_);
+            float pdf_refl = pdfGGX_VNDF_reflection(wi, wo, alpha_);
+            float pdf_tran = pdfGGX_VNDF_transmission(wi, wo, eta, alpha_);
+            *pdf = pdf_refl + pdf_tran;
         }
 
         return wi;
@@ -102,7 +124,8 @@ float Material::pdf(const Vec3& wi, const Vec3& wo, const Vec3& normal) const {
         return Pd * pdfCosineHemisphere(wi, wo) + Ps * pdfGGX_VNDF_reflection(wi, wo, alpha_);
     }
     else {
-        float eta = cosTheta(wo) > 0.0f ? 1.0f / ior_ : ior_;
+        bool entering = cosTheta(wo) > 0.0f;
+        float eta = entering ? 1.0f / ior_ : ior_;
         // One term will always be 0
         return pdfGGX_VNDF_reflection(wi, wo, alpha_) + pdfGGX_VNDF_transmission(wi, wo, eta, alpha_);
     }

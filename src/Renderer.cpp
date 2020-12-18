@@ -79,20 +79,28 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
 
     RayHit hit = scene.intersect(ray);
     if (hit.t < 0.0f) {
-        return backgroundColor_ * lambda;
+        Vec3 c = lambda * backgroundColor_;
+        assert(!std::isnan(c.r) && !std::isnan(c.g) && !std::isnan(c.b));
+        assert(!std::isinf(c.r) && !std::isinf(c.g) && !std::isinf(c.b));
+        assert(c.r >= 0.0f && c.g >= 0.0f && c.b >= 0.0f);
+        return c;
     }
     if (hit.shape->isLight() && depth == 0) {
-        return lambda * hit.shape->material->getEmittance();
+        Vec3 c = lambda * hit.shape->material->getEmittance();
+        assert(!std::isnan(c.r) && !std::isnan(c.g) && !std::isnan(c.b));
+        assert(!std::isinf(c.r) && !std::isinf(c.g) && !std::isinf(c.b));
+        assert(c.r >= 0.0f && c.g >= 0.0f && c.b >= 0.0f);
+        return c;
     }
 
     Vec3 normal = hit.normal;
-    Vec3 intersectionPoint = ray.at(hit.t) + hit.normal * 0.001f;
     Vec3 wo = normalize(-ray.direction);
     const Material* material = hit.shape->material;
    
     OrthonormalBasis basis(normal);
     wo = basis.worldToLocal(wo);
     normal = basis.worldToLocal(normal);
+    Vec3 intersectionPoint = ray.at(hit.t);
 
     Vec3 color(0.0f);
     { // Direct illuminaton
@@ -105,9 +113,15 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
             rng.uniformFloat(), rng.uniformFloat(), &lightPdf);
         Vec3 wi = basis.worldToLocal(lightDir);
 
-        float dotNL = cosTheta(wi);
+        float dotNL = abs(cosTheta(wi));
         if (dotNL > 0.0f && lightPdf > 0.0f) {
-            RayHit lightHit = scene.intersect(Ray(intersectionPoint, lightDir));
+            Ray lightRay;
+            lightRay.origin = cosTheta(wi) > 0.0f
+                ? intersectionPoint + hit.normal * 0.001f
+                : intersectionPoint - hit.normal * 0.001f;
+            lightRay.direction = lightDir;
+
+            RayHit lightHit = scene.intersect(lightRay);
             if (lightHit.shape == light && lightHit.shape != hit.shape) {
                 Vec3 brdf = material->evaluate(wi, wo, normal);
                 float brdfPdf = material->pdf(wi, wo, normal);
@@ -116,6 +130,9 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
                     assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
                     assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
                     color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / lightPdf;
+                    assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
+                    assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
+                    assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
                 }
             }
         }
@@ -123,9 +140,15 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
         // MIS brdf sampling
         float brdfPdf;
         wi = material->sampleDirection(wo, normal, rng.uniformFloat(), rng.uniformFloat(), &brdfPdf);
-        dotNL = cosTheta(wi);
+        dotNL = abs(cosTheta(wi));
         if (dotNL > 0.0f && brdfPdf > 0.0f) {
-            RayHit lightHit = scene.intersect(Ray(intersectionPoint, basis.localToWorld(wi)));
+            Ray lightRay;
+            lightRay.origin = cosTheta(wi) > 0.0f
+                ? intersectionPoint + hit.normal * 0.001f
+                : intersectionPoint - hit.normal * 0.001f;
+            lightRay.direction = basis.localToWorld(wi);
+
+            RayHit lightHit = scene.intersect(lightRay);
             if (lightHit.shape == light && lightHit.shape != hit.shape) {
                 Vec3 brdf = material->evaluate(wi, wo, normal);
                 lightPdf = light->pdf(intersectionPoint);
@@ -134,6 +157,9 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
                     assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
                     assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
                     color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / brdfPdf;
+                    assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
+                    assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
+                    assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
                 }
             }
         }
@@ -142,16 +168,20 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
         color /= lightProb;
     }
 
-    // Indirect Illumination
+    // Indirect illumination
     float pdf;
     Vec3 wi = material->sampleDirection(wo, normal, rng.uniformFloat(), rng.uniformFloat(), &pdf);
-    float dotNL = cosTheta(wi);
+    float dotNL = abs(cosTheta(wi));
     if (dotNL <= 0.0f || pdf <= 0.0f) {
+        assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
+        assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
+        assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
         return color;
     }
 
     assert(pdf > 0.0f && !std::isinf(pdf) && !std::isnan(pdf));
     Vec3 brdf = material->evaluate(wi, wo, normal);
+    assert(lengthSq(brdf) > 0.0f);
     lambda *= brdf * dotNL / pdf;
     
     float rrProb = max(lambda.r, max(lambda.g, lambda.b));
@@ -161,8 +191,16 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
             lambda /= rrProb;
         }
 
-        Ray newRay(intersectionPoint, basis.localToWorld(wi));
+        Ray newRay;
+        newRay.origin = cosTheta(wi) > 0.0f
+            ? intersectionPoint + hit.normal * 0.001f
+            : intersectionPoint - hit.normal * 0.001f;
+        newRay.direction = basis.localToWorld(wi);
+
         color += lambda * radiance(scene, rng, newRay, lambda, depth + 1);
+        assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
+        assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
+        assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
     }
 
     // TODO: Radiance clamping after N bounces?

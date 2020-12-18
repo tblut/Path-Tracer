@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
     pt::Material greenMat{ pt::srgbToLinear(pt::Vec3(0, 0.8f, 0)), 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, pt::Vec3(0) };
     pt::Material whiteMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 4.0f, 1.0f, 0.0f, 0.0f, 1.0f, pt::Vec3(0) };
     pt::Material plasticMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, pt::Vec3(0) };
-    pt::Material metallMat{ pt::srgbToLinear(pt::Vec3(0.0f, 0.0f, 0.8f)), 0.5f, 0.0f, 0.0f, 1.0f, 1.5f, pt::Vec3(0) };
+    pt::Material metallMat{ pt::srgbToLinear(pt::Vec3(1.0f, 1.0f, 1.0f)), 0.5f, 0.1f, 1.0f, 1.0f, 1.5f, pt::Vec3(0) };
     pt::Material lightMat{ pt::Vec3(0), 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, pt::Vec3(16) };
     pt::Material lightMat2{ pt::Vec3(0), 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, pt::Vec3(100) };
 
