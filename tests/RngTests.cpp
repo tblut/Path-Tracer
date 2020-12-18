@@ -9,7 +9,7 @@
 TEST_CASE("RandomSeries Uniform Sampling") {
     constexpr int numSamples = 1000000;
     constexpr int numBuckets = 100;
-    constexpr double significance = 0.001;
+    constexpr double significance = 0.05;
 
     std::array<int, numBuckets> buckets;
     buckets.fill(0);
