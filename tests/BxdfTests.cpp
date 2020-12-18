@@ -24,7 +24,7 @@ using BxdfSample = std::function<pt::Vec3(const pt::Vec3& wo, float u1, float u2
 pt::RandomSeries rng;
 void testBxdfGoodnessOfFit(const BxdfPdf& pdf, const BxdfSample& sample) {
     for (int testRun = 0; testRun < numTestRuns; testRun++) {
-        pt::Vec3 wo = pt::sampleUniformSphere(rng.uniformFloat(), rng.uniformFloat());
+        pt::Vec3 wo = pt::Vec3(0, 0, 1);// pt::sampleUniformSphere(rng.uniformFloat(), rng.uniformFloat());
 
         // Determine expected frequencies per bucket
         std::array<float, thetaRes * phiRes> expFrequencies;
@@ -38,7 +38,7 @@ void testBxdfGoodnessOfFit(const BxdfPdf& pdf, const BxdfSample& sample) {
                 float probability = pt::adaptiveSimpson2D([&](float theta, float phi) {
                     auto wi = pt::Vec3::fromSpherical(theta, phi);
                     return pdf(wi, wo) * std::sin(theta);
-                }, x0, x1, y0, y1, 1e-6f, 8);
+                }, x0, x1, y0, y1, 1e-6f, 10);
 
                 expFrequencies[theta + phi * thetaRes] = probability * sampleCount;
             }
@@ -68,8 +68,14 @@ void testBxdfGoodnessOfFit(const BxdfPdf& pdf, const BxdfSample& sample) {
             frequencies[thetaBucket + phiBucket * thetaRes]++;
         }
 
+        float count = 0;
+        for (auto f : expFrequencies) count += f;
+
+        int count2 = 0;
+        for (auto f : frequencies) count2 += f;
+
         // Sort buckets by expected frequency
-        std::array<int, thetaRes* phiRes> bucketIndices;
+        std::array<int, thetaRes * phiRes> bucketIndices;
         for (int i = 0; i < static_cast<int>(bucketIndices.size()); i++) {
             bucketIndices[i] = i;
         }
@@ -111,6 +117,7 @@ void testBxdfGoodnessOfFit(const BxdfPdf& pdf, const BxdfSample& sample) {
             criticalValue += diff * diff / mergedExpFrequency;
             dof++;
         }
+        REQUIRE_FALSE(std::isinf(criticalValue));
 
         dof--; // Degrees of fredom = # buckets - 1
         float p = 1.0f - static_cast<float>(pt::chi2cdf(dof, criticalValue));
@@ -151,7 +158,7 @@ TEST_CASE("GGX Normal Distribution (D Term)") {
     }
 }
 
-/*
+
 TEST_CASE("Uniform Sphere Sampling") {
     testBxdfGoodnessOfFit(
         [](const pt::Vec3& wi, const pt::Vec3& wo) {
@@ -175,14 +182,15 @@ TEST_CASE("Cosine-weighted Hemisphere Sampling") {
 
 
 TEST_CASE("GGX Reflection Sampling") {
-    for (int i = 0; i < 20; i++) {
-        float alpha = 0.01f + (i / 20.0f) * (1.0f - 0.01f);
+    for (int i = 0; i < 10; i++) {
+        float alpha = 0.1f + (i / 10.0f) * (1.0f - 0.1f);
         testBxdfGoodnessOfFit(
             [&](const pt::Vec3& wi, const pt::Vec3& wo) {
                 return pt::pdfGGX_reflection(wi, wo, alpha);
             },
             [&](const pt::Vec3& wo, float u1, float u2) {
                 pt::Vec3 wh = pt::sampleGGX(alpha, u1, u2);
+                if (!pt::sameHemisphere(wo, wh)) wh = -wh;
                 if (pt::dot(wo, wh) < 0.0f) {
                     return pt::Vec3(0.0f);
                 }
@@ -199,14 +207,15 @@ TEST_CASE("GGX Reflection Sampling") {
 
 
 TEST_CASE("GGX VNDF Reflection Sampling") {
-    for (int i = 0; i < 20; i++) {
-        float alpha = 0.01f + (i / 20.0f) * (1.0f - 0.01f);
+    for (int i = 0; i < 10; i++) {
+        float alpha = 0.1f + (i / 10.0f) * (1.0f - 0.1f);
         testBxdfGoodnessOfFit(
             [&](const pt::Vec3& wi, const pt::Vec3& wo) {
                 return pt::pdfGGX_VNDF_reflection(wi, wo, alpha);
             },
             [&](const pt::Vec3& wo, float u1, float u2) {
-                pt::Vec3 wh = pt::sampleGGX_VNDF(wo, alpha, u1, u2);
+                pt::Vec3 wh = pt::sampleGGX_VNDF(wo.z < 0.0f ? -wo : wo, alpha, u1, u2);
+                if (!pt::sameHemisphere(wo, wh)) wh = -wh;
                 if (pt::dot(wo, wh) < 0.0f) {
                     return pt::Vec3(0.0f);
                 }
@@ -220,30 +229,31 @@ TEST_CASE("GGX VNDF Reflection Sampling") {
             });
     }
 }
-*/
 
 
 TEST_CASE("GGX Transmission Sampling") {
     constexpr float etaI = 1.0f;
-    constexpr float etaT = 1.5f;
+    constexpr float etaO = 1.5f;
 
-    for (int i = 0; i < 20; i++) {
-        float alpha = 0.01f + (i / 20.0f) * (1.0f - 0.01f);
+    for (int i = 0; i < 10; i++) {
+        float alpha = 0.1f + (i / 10.0f) * (1.0f - 0.1f);
         testBxdfGoodnessOfFit(
             [&](const pt::Vec3& wi, const pt::Vec3& wo) {
-                float eta = pt::cosTheta(wo) < 0.0f ? etaT / etaI : etaI / etaT;
-                float pdf =  pt::pdfGGX_transmission(wi, wo, eta, alpha);
+                bool entering = pt::cosTheta(wo) > 0.0f;
+                float eta = entering ? etaO / etaI : etaI / etaO;
+                float pdf = pt::pdfGGX_transmission(wi, wo, eta, alpha);
                 assert(pdf >= 0.0f);
                 return pdf;
             },
             [&](const pt::Vec3& wo, float u1, float u2) {
                 pt::Vec3 wh = pt::sampleGGX(alpha, u1, u2);
-                if (pt::cosTheta(wo) < 0.0f) wh = -wh;
+                if (!pt::sameHemisphere(wo, wh)) wh = -wh;
                 if (pt::dot(wo, wh) < 0.0f) return pt::Vec3(0.0f);
                 assert(pt::sameHemisphere(wh, wo));
                 assert(pt::dot(wo, wh) >= 0.0f);
 
-                float eta = pt::cosTheta(wo) < 0.0f ? etaT / etaI : etaI / etaT;
+                bool entering = pt::cosTheta(wo) > 0.0f;
+                float eta = entering ? etaO / etaI : etaI / etaO;
 
                 pt::Vec3 wi;
                 if (!pt::refract(wo, wh, eta, wi)) {
@@ -252,27 +262,58 @@ TEST_CASE("GGX Transmission Sampling") {
                 if (pt::sameHemisphere(wi, wo)) {
                     return pt::Vec3(0.0f);
                 }
-
-                pt::Vec3 wh_2 = pt::normalize(wi + eta * wo);
+                if (pt::dot(wo, wh) * pt::dot(wi, wh) > 0.0f) {
+                    return pt::Vec3(0.0f);
+                }
+                if (pt::cosTheta(wi) == 0.0f || pt::cosTheta(wo) == 0.0f) {
+                    return pt::Vec3(0.0f);
+                }
 
                 return wi;
             });
     }
 }
 
-/*
+
 TEST_CASE("GGX VNDF Transmission Sampling") {
-    for (int i = 0; i < 20; i++) {
-        float alpha = 0.01f + (i / 20.0f) * (1.0f - 0.01f);
+    constexpr float etaI = 1.0f;
+    constexpr float etaO = 1.5f;
+
+    for (int i = 0; i < 10; i++) {
+        float alpha = 0.1f + (i / 10.0f) * (1.0f - 0.1f);
         testBxdfGoodnessOfFit(
             [&](const pt::Vec3& wi, const pt::Vec3& wo) {
-                pt::Vec3 wh = pt::normalize(wi + wo);
-                return pt::pdfGGX_VNDF_reflection(wi, wo, alpha);
+                bool entering = pt::cosTheta(wo) > 0.0f;
+                float eta = entering ? etaO / etaI : etaI / etaO;
+                float pdf = pt::pdfGGX_VNDF_transmission(wi, wo, eta, alpha);
+                assert(pdf >= 0.0f);
+                return pdf;
             },
             [&](const pt::Vec3& wo, float u1, float u2) {
-                pt::Vec3 wh = pt::sampleGGX_VNDF(wo, alpha, u1, u2);
-                return pt::reflect(wo, wh);
+                pt::Vec3 wh = pt::sampleGGX_VNDF(wo.z < 0.0f ? -wo : wo, alpha, u1, u2);
+                if (!pt::sameHemisphere(wo, wh)) wh = -wh;
+                if (pt::dot(wo, wh) < 0.0f) return pt::Vec3(0.0f);
+                assert(pt::sameHemisphere(wh, wo));
+                assert(pt::dot(wo, wh) >= 0.0f);
+
+                bool entering = pt::cosTheta(wo) > 0.0f;
+                float eta = entering ? etaO / etaI : etaI / etaO;
+
+                pt::Vec3 wi;
+                if (!pt::refract(wo, wh, eta, wi)) {
+                    return pt::Vec3(0.0f);
+                }
+                if (pt::sameHemisphere(wi, wo)) {
+                    return pt::Vec3(0.0f);
+                }
+                if (pt::dot(wo, wh) * pt::dot(wi, wh) > 0.0f) {
+                    return pt::Vec3(0.0f);
+                }
+                if (pt::cosTheta(wi) == 0.0f || pt::cosTheta(wo) == 0.0f) {
+                    return pt::Vec3(0.0f);
+                }
+
+                return wi;
             });
     }
 }
-*/

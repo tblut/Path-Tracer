@@ -41,13 +41,8 @@ inline float Fr_Dielectric(float cosThetaI, float eta) {
 }
 
 inline float D_GGX(const Vec3& wh, float alpha) {
-    float cosThetaH = abs(cosTheta(wh));
-    if (cosThetaH <= 0.0f) {
-        //return 0.0f;
-    }
-
     float alpha2 = alpha * alpha;
-    float a = 1.0f + cosThetaH * cosThetaH * (alpha2 - 1.0f);
+    float a = 1.0f + cosTheta2(wh) * (alpha2 - 1.0f);
     return alpha2 / (pi<float> * a * a);
 }
 
@@ -67,15 +62,8 @@ inline float G2_SmithUncorrelated_GGX(const Vec3& wi, const Vec3& wo, const Vec3
 }
 
 inline float G2_SmithHeightCorrelated_GGX(const Vec3& wi, const Vec3& wo, const Vec3& wh, float alpha) {
-    if (dot(wi, wh) <= 0.0f || dot(wo, wh) <= 0.0f) {
-        return 0.0f;
-    }
-
     float cos2ThetaO = cosTheta2(wo);
     float cos2ThetaI = cosTheta2(wi);
-    assert(cos2ThetaO > 0.0f);
-    assert(cos2ThetaI > 0.0f);
-
     float alpha2 = alpha * alpha;
     float lambda_wo = (-1.0f + std::sqrt(alpha2 * (1.0f - cos2ThetaO) / cos2ThetaO + 1.0f)) / 2.0f;
     float lambda_wi = (-1.0f + std::sqrt(alpha2 * (1.0f - cos2ThetaI) / cos2ThetaI + 1.0f)) / 2.0f;
@@ -180,14 +168,8 @@ inline float pdfGGX_transmission(const Vec3& wi, const Vec3& wo, float eta, floa
     }
 
     Vec3 wh = normalize(wi + eta * wo);
-    if (dot(wo, wh) * dot(wi, wh) > 0.0f) {
-        return 0.0f;
-    }
-
-    float a = dot(wh, wo);
-    float b = dot(wh, wi);
-
-    //assert(dot(wi, wh) > 0.0f);
+    bool sameSide = dot(wo, wh) * dot(wi, wh) > 0.0f;
+    if (sameSide) return 0.0f;
 
     float pdf_h = D_GGX(wh, alpha) * abs(cosTheta(wh));
     float sqrtDenom = dot(wi, wh) + eta * dot(wo, wh);
@@ -229,9 +211,9 @@ inline float pdfGGX_VNDF_reflection(const Vec3& wi, const Vec3& wo, float alpha)
     }
 
     Vec3 wh = normalize(wi + wo);
-    float pdf_h = G1_Smith_GGX(wo, wh, alpha) * D_GGX(wh, alpha) * dot(wh, wo) / abs(cosTheta(wo));
-    float dwh_dwi = 4.0f * dot(wh, wi);
-    return pdf_h / dwh_dwi;
+    float pdf_h = G1_Smith_GGX(wo, wh, alpha) * D_GGX(wh, alpha) * abs(dot(wh, wo)) / abs(cosTheta(wo));
+    float dwh_dwi = 1.0f / (4.0f * dot(wi, wh));
+    return pdf_h * dwh_dwi;
 }
 
 inline float pdfGGX_VNDF_transmission(const Vec3& wi, const Vec3& wo, float eta, float alpha) {
@@ -239,11 +221,14 @@ inline float pdfGGX_VNDF_transmission(const Vec3& wi, const Vec3& wo, float eta,
         return 0.0f;
     }
 
-    Vec3 wh = normalize(eta * wi + wo);
-    float pdf_h = G1_Smith_GGX(wo, wh, alpha) * D_GGX(wh, alpha) * dot(wh, wo) / abs(cosTheta(wo));
-    float sqrtDenom = eta * dot(wi, wh) + dot(wo, wh);
-    float dwh_dwi = eta * eta * dot(wi, wh) / (sqrtDenom * sqrtDenom);
-    return pdf_h / dwh_dwi;
+    Vec3 wh = normalize(wi + eta * wo);
+    bool sameSide = dot(wo, wh) * dot(wi, wh) > 0.0f;
+    if (sameSide) return 0.0f;
+
+    float pdf_h = G1_Smith_GGX(wo, wh, alpha) * D_GGX(wh, alpha) * abs(dot(wh, wo)) / abs(cosTheta(wo));
+    float sqrtDenom = dot(wi, wh) + eta * dot(wo, wh);
+    float dwh_dwi = abs(dot(wi, wh)) / (sqrtDenom * sqrtDenom);
+    return pdf_h * dwh_dwi;
 }
 
 } // namespace pt
