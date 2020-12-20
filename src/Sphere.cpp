@@ -37,9 +37,10 @@ Vec3 Sphere::normalAt(const Vec3& p) const {
 Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) const {
     Vec3 w = center_ - p;
     float distSq = lengthSq(w);
-    float cosThetaMax = std::sqrt(1.0f - radiusSq_ / distSq);
+    float sin2ThetaMax = radiusSq_ / distSq;
+    float cosThetaMax = std::sqrt(max(0.0f, 1.0f - sin2ThetaMax));
     float cosTheta = 1.0f - u1 + u1 * cosThetaMax;
-    float sinTheta = std::sqrt(1.0f - cosTheta * cosTheta);
+    float sinTheta = std::sqrt(max(0.0f, 1.0f - cosTheta * cosTheta));
     float phi = 2.0f * pi<float> * u2;
     Vec3 dir(
         sinTheta * std::cos(phi),
@@ -58,7 +59,8 @@ Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) cons
 }
 
 float Sphere::pdf(const Vec3& p) const {
-    float cosThetaMax = std::sqrt(1.0f - radiusSq_ / lengthSq(center_ - p));
+    float sin2ThetaMax = radiusSq_ / lengthSq(center_ - p);
+    float cosThetaMax = std::sqrt(max(0.0f, 1.0f - sin2ThetaMax));
     return 1.0f / (2.0f * pi<float> * (1.0f - cosThetaMax));
 }
 
