@@ -83,14 +83,11 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
         return lambda * hit.shape->material->getEmittance();
     }
 
-    Vec3 normal = hit.normal;
-    Vec3 wo = normalize(-ray.direction);
     const Material* material = hit.shape->material;
-   
-    OrthonormalBasis basis(normal);
-    wo = basis.worldToLocal(wo);
-    normal = basis.worldToLocal(normal);
     Vec3 intersectionPoint = ray.at(hit.t);
+    Vec3 wo = normalize(-ray.direction);
+    OrthonormalBasis basis(hit.normal);
+    wo = basis.worldToLocal(wo);
 
     Vec3 color(0.0f);
     { // Direct illuminaton
@@ -151,18 +148,18 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
     }
 
     // Indirect illumination
-    float pdf;
+    float pdf = -inf<float>;
     Vec3 wi = material->sampleDirection(wo, rng.uniformFloat(), rng.uniformFloat(), &pdf);
     float dotNL = abs(cosTheta(wi));
     if (dotNL <= 0.0f || pdf <= 0.0f) {
         return color;
     }
 
-    Vec3 brdf = material->evaluate(wi, wo);
-    lambda *= brdf * dotNL / pdf;
+    Vec3 bsdf = material->evaluate(wi, wo);
+    lambda *= bsdf * abs(cosTheta(wi)) / pdf;
     assert(isFinite(lambda) && lambda.r >= 0.0f && lambda.g >= 0.0f && lambda.b >= 0.0f);
 
-    float rrProb = max(lambda.r, max(lambda.g, lambda.b));
+    float rrProb = min(0.95f, max(lambda.r, max(lambda.g, lambda.b)));
     if (depth < minRRDepth_ || rng.uniformFloat() <= rrProb) {
         if (depth >= minRRDepth_) {
             assert(rrProb > 0.0f && std::isfinite(rrProb));
