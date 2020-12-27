@@ -61,9 +61,7 @@ void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
                     float v = (y + rng.uniformFloat()) / static_cast<float>(film.getHeight() - 1);
                     Ray ray = camera.generateRay(u, v, rng.uniformFloat(), rng.uniformFloat());
                     Vec3 color = radiance(scene, rng, ray, Vec3(1.0f));
-                    assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
-                    assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
-                    assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
+                    assert(isFinite(color) && color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
                     film.addSample(x, y, color);
                 }
             }
@@ -79,18 +77,10 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
 
     RayHit hit = scene.intersect(ray);
     if (hit.t < 0.0f) {
-        Vec3 c = backgroundColor_;
-        assert(!std::isnan(c.r) && !std::isnan(c.g) && !std::isnan(c.b));
-        assert(!std::isinf(c.r) && !std::isinf(c.g) && !std::isinf(c.b));
-        assert(c.r >= 0.0f && c.g >= 0.0f && c.b >= 0.0f);
-        return c;
+        return backgroundColor_;
     }
     if (hit.shape->isLight() && depth == 0) {
-        Vec3 c = hit.shape->material->getEmittance();
-        assert(!std::isnan(c.r) && !std::isnan(c.g) && !std::isnan(c.b));
-        assert(!std::isinf(c.r) && !std::isinf(c.g) && !std::isinf(c.b));
-        assert(c.r >= 0.0f && c.g >= 0.0f && c.b >= 0.0f);
-        return c;
+        return hit.shape->material->getEmittance();
     }
 
     Vec3 normal = hit.normal;
@@ -127,12 +117,8 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
                 float brdfPdf = material->pdf(wi, wo, normal);
                 if (brdfPdf > 0.0f) {
                     float misWeight = powerHeuristic(1, lightPdf, 1, brdfPdf);
-                    assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
-                    assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
                     color += light->material->getEmittance() * brdf * dotNL * misWeight / lightPdf;
-                    assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
-                    assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
-                    assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
+                    assert(isFinite(color) && color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
                 }
             }
         }
@@ -154,12 +140,8 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
                 lightPdf = light->pdf(intersectionPoint);
                 if (lightPdf > 0.0f) {
                     float misWeight = powerHeuristic(1, brdfPdf, 1, lightPdf);
-                    assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
-                    assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
                     color += light->material->getEmittance() * brdf * dotNL * misWeight / brdfPdf;
-                    assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
-                    assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
-                    assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
+                    assert(isFinite(color) && color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
                 }
             }
         }
@@ -173,21 +155,17 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
     Vec3 wi = material->sampleDirection(wo, normal, rng.uniformFloat(), rng.uniformFloat(), &pdf);
     float dotNL = abs(cosTheta(wi));
     if (dotNL <= 0.0f || pdf <= 0.0f) {
-        assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
-        assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
-        assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
         return color;
     }
 
-    assert(pdf > 0.0f && !std::isinf(pdf) && !std::isnan(pdf));
     Vec3 brdf = material->evaluate(wi, wo, normal);
-    assert(lengthSq(brdf) > 0.0f);
     lambda *= brdf * dotNL / pdf;
-    
+    assert(isFinite(lambda) && lambda.r >= 0.0f && lambda.g >= 0.0f && lambda.b >= 0.0f);
+
     float rrProb = max(lambda.r, max(lambda.g, lambda.b));
     if (depth < minRRDepth_ || rng.uniformFloat() <= rrProb) {
         if (depth >= minRRDepth_) {
-            assert(rrProb > 0.0f);
+            assert(rrProb > 0.0f && std::isfinite(rrProb));
             lambda /= rrProb;
         }
 
@@ -198,9 +176,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
         newRay.direction = basis.localToWorld(wi);
 
         color += lambda * radiance(scene, rng, newRay, lambda, depth + 1);
-        assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
-        assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
-        assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
+        assert(isFinite(color) && color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
     }
 
     // TODO: Radiance clamping after N bounces?

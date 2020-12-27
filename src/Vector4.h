@@ -124,6 +124,11 @@ constexpr bool isNormalized(const Vector4<T>& a, T eps = static_cast<T>(1.0e-6))
     return abs(lengthSq(a) - static_cast<T>(1)) < eps;
 }
 
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+inline bool isFinite(const Vector4<T>& a) {
+    return std::isfinite(a.x) && std::isfinite(a.y) && std::isfinite(a.z) && std::isfinite(a.w);
+}
+
 using Vec4 = Vector4<float>;
 
 } // namespace pt

@@ -132,6 +132,11 @@ constexpr bool isNormalized(const Vector3<T>& a, T eps = static_cast<T>(1.0e-6))
     return abs(lengthSq(a) - static_cast<T>(1)) < eps;
 }
 
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+inline bool isFinite(const Vector3<T>& a) {
+    return std::isfinite(a.x) && std::isfinite(a.y) && std::isfinite(a.z);
+}
+
 template <typename T>
 constexpr Vector3<T> cross(const Vector3<T>& a, const Vector3<T>& b) {
     return {
