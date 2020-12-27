@@ -45,7 +45,8 @@ constexpr T lerp(T a, T b, T t) {
 
 template <typename T>
 constexpr T remap(T value, T low1, T high1, T low2, T high2) {
-    return low2 + (value - low1) * (high2 - low2) / (high1 - low1);
+    T remapped = low2 + (value - low1) * (high2 - low2) / (high1 - low1);
+    return clamp(remapped, low2, high2);
 }
 
 template <typename T>
