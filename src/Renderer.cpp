@@ -110,21 +110,22 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
 
             RayHit lightHit = scene.intersect(lightRay);
             if (lightHit.shape == light && lightHit.shape != hit.shape) {
-                Vec3 brdf = material->evaluate(wi, wo);
-                float brdfPdf = material->pdf(wi, wo);
-                if (brdfPdf > 0.0f) {
-                    float misWeight = powerHeuristic(1, lightPdf, 1, brdfPdf);
-                    color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / lightPdf;
+                float bsdfPdf = material->pdf(wi, wo);
+                if (bsdfPdf > 0.0f) {
+                    float misWeight = powerHeuristic(1, lightPdf, 1, bsdfPdf);
+                    Vec3 bsdf = material->evaluate(wi, wo);
+                    color += lambda * light->material->getEmittance() * bsdf * dotNL * misWeight / lightPdf;
                     assert(isFinite(color) && color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
                 }
             }
         }
 
+        // TODO: Reuse BSDF ray for MIS direct lighting and indirect lighting
         // MIS brdf sampling
-        float brdfPdf;
-        wi = material->sampleDirection(wo, rng.uniformFloat(), rng.uniformFloat(), &brdfPdf);
+        float bsdfPdf;
+        wi = material->sampleDirection(wo, rng.uniformFloat(), rng.uniformFloat(), &bsdfPdf);
         dotNL = abs(cosTheta(wi));
-        if (dotNL > 0.0f && brdfPdf > 0.0f) {
+        if (dotNL > 0.0f && bsdfPdf > 0.0f) {
             Ray lightRay;
             lightRay.origin = cosTheta(wi) > 0.0f
                 ? intersectionPoint + hit.normal * 0.001f
@@ -133,11 +134,11 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
 
             RayHit lightHit = scene.intersect(lightRay);
             if (lightHit.shape == light && lightHit.shape != hit.shape) {
-                Vec3 brdf = material->evaluate(wi, wo);
                 lightPdf = light->pdf(intersectionPoint);
                 if (lightPdf > 0.0f) {
                     float misWeight = powerHeuristic(1, brdfPdf, 1, lightPdf);
-                    color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / brdfPdf;
+                    Vec3 bsdf = material->evaluate(wi, wo);
+                    color += lambda * light->material->getEmittance() * bsdf * dotNL * misWeight / bsdfPdf;
                     assert(isFinite(color) && color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
                 }
             }
@@ -156,7 +157,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
     }
 
     Vec3 bsdf = material->evaluate(wi, wo);
-    lambda *= bsdf * abs(cosTheta(wi)) / pdf;
+    lambda *= bsdf * dotNL / pdf;
     assert(isFinite(lambda) && lambda.r >= 0.0f && lambda.g >= 0.0f && lambda.b >= 0.0f);
 
     float rrProb = min(0.95f, max(lambda.r, max(lambda.g, lambda.b)));

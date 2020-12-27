@@ -2,6 +2,7 @@
 #include "OrthonormalBasis.h"
 #include "MathUtils.h"
 #include "BSDF.h"
+#include "ColorUtils.h"
 
 #include <cassert>
 
@@ -36,7 +37,7 @@ Vec3 Material::evaluate(const Vec3& wi, const Vec3& wo) const {
 Vec3 Material::sampleDirection(const Vec3& wo, float u1, float u2, float* pdf) const {
     float eta = computeRelativeIOR(wo);
     float pDiffuse, pSpecular, pTransmission;
-    computeLobeProbabilities(pDiffuse, pSpecular, pTransmission);
+    computeLobeProbabilities(wo, pDiffuse, pSpecular, pTransmission);
 
     Vec3 wi;
     if (u1 < pDiffuse) {
@@ -104,7 +105,7 @@ float Material::pdf(const Vec3& wi, const Vec3& wo) const {
     float eta = computeRelativeIOR(wo);
 
     float pDiffuse, pSpecular, pTransmission;
-    computeLobeProbabilities(pDiffuse, pSpecular, pTransmission);
+    computeLobeProbabilities(wo, pDiffuse, pSpecular, pTransmission);
 
     return pDiffuse * pdfCosineHemisphere(wi, wo)
         + pSpecular * pdfGGX_VNDF_reflection(wi, wo, alpha_)
@@ -116,15 +117,18 @@ float Material::computeRelativeIOR(const Vec3& wo) const {
     return entering ? 1.0f / ior_ : ior_;
 }
 
-void Material::computeLobeProbabilities(float& pDiffuse, float& pSpecular, float& pTransmission) const {
-    float dielectricBrdfWeight = (1.0f - metalness_) * (1.0f - transmission_);
-    float specularBsdfWeight = (1.0f - metalness_) * transmission_;
-    float metallicBrdfWeight = metalness_;
-    
-    pDiffuse = dielectricBrdfWeight;
-    pSpecular = dielectricBrdfWeight + metallicBrdfWeight + specularBsdfWeight;
-    pTransmission = specularBsdfWeight;
-    
+void Material::computeLobeProbabilities(const Vec3& wo, float& pDiffuse, float& pSpecular, float& pTransmission) const {
+    float eta = computeRelativeIOR(wo);
+    Vec3 f0 = lerp(schlickF0FromRelativeIOR(eta), baseColor_, metalness_);
+    Vec3 fresnel = Fr_Schlick(abs(cosTheta(wo)), f0);
+
+    float diffuseWeight = (1.0f - metalness_) * (1.0f - transmission_);
+    float transmissionWeight = (1.0f - metalness_) * transmission_;
+
+    pDiffuse = maxComponent(baseColor_) * diffuseWeight;
+    pSpecular = maxComponent(fresnel);
+    pTransmission = maxComponent(Vec3(1.0f) - fresnel) * transmissionWeight;
+
     float normFactor = 1.0f / (pDiffuse + pSpecular + pTransmission);
     pDiffuse *= normFactor;
     pSpecular *= normFactor;

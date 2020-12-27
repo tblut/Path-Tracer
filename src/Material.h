@@ -24,7 +24,7 @@ public:
 
 private:
     float computeRelativeIOR(const Vec3& wo) const;
-    void computeLobeProbabilities(float& pDiffuse, float& pSpecular, float& pTransmission) const;
+    void computeLobeProbabilities(const Vec3& wo, float& pDiffuse, float& pSpecular, float& pTransmission) const;
 
     Vec3 baseColor_;
     float roughness_;
