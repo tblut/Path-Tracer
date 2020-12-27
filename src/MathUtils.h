@@ -18,6 +18,11 @@ using std::abs;
 using std::floor;
 using std::ceil;
 
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+inline T sign(T a) {
+    return std::copysign(static_cast<T>(1), a);
+}
+
 template <typename T>
 constexpr T min(T a, T b) {
     return a < b ? a : b;

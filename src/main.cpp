@@ -20,13 +20,13 @@ int main(int argc, char** argv) {
         pt::lookAt(pt::Vec3(0.0f, 0.0f, 5.0f), pt::Vec3(0.0f, 0.0f, 0.0f), pt::Vec3(0, 1, 0))
     );
 
-    pt::Material redMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0, 0)), 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, pt::Vec3(0) };
-    pt::Material greenMat{ pt::srgbToLinear(pt::Vec3(0, 0.8f, 0)), 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, pt::Vec3(0) };
-    pt::Material whiteMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 4.0f, 1.0f, 0.0f, 0.0f, 1.0f, pt::Vec3(0) };
-    pt::Material plasticMat{ pt::srgbToLinear(pt::Vec3(0.8f, 0.8f, 0.8f)), 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, pt::Vec3(0) };
-    pt::Material metallMat{ pt::srgbToLinear(pt::Vec3(1.0f, 1.0f, 1.0f)), 0.5f, 0.1f, 1.0f, 1.0f, 1.5f, pt::Vec3(0) };
-    pt::Material lightMat{ pt::Vec3(0), 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, pt::Vec3(16) };
-    pt::Material lightMat2{ pt::Vec3(0), 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, pt::Vec3(100) };
+    pt::Material redMat{     pt::Vec3(0.8f, 0.0f, 0.0f), 1.0f, 0.0f, 0.0f, 1.5f, pt::Vec3(0) };
+    pt::Material greenMat{   pt::Vec3(0.0f, 0.8f, 0.0f), 1.0f, 0.0f, 0.0f, 1.5f, pt::Vec3(0) };
+    pt::Material whiteMat{   pt::Vec3(0.8f, 0.8f, 0.8f), 1.0f, 0.0f, 0.0f, 1.5f, pt::Vec3(0) };
+    pt::Material plasticMat{ pt::Vec3(1.0f, 0.9f, 0.8f), 0.2f, 1.0f, 0.0f, 1.5f, pt::Vec3(0) };
+    pt::Material metallMat{  pt::Vec3(1.0f, 1.0f, 1.0f), 0.0f, 0.0f, 1.0f, 1.6f, pt::Vec3(0) };
+    pt::Material lightMat{ pt::Vec3(0), 1.0f, 0.0f, 0.0f, 1.5f, pt::Vec3(12) };
+    pt::Material lightMat2{ pt::Vec3(0), 1.0f, 0.0f, 0.0f, 1.5f, pt::Vec3(6) };
 
     pt::Sphere left(pt::Vec3(-1002, 0, 0), 1000, redMat);
     pt::Sphere right(pt::Vec3(1002, 0, 0), 1000, greenMat);
