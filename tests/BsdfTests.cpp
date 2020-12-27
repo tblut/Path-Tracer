@@ -216,8 +216,8 @@ TEST_CASE("Cosine-weighted Hemisphere Sampling") {
         });
 }
 
-// The microfacet BxDFs are really fragile n the tests. They seem to work well enough
-// though, when inspecting observed and expected frequencies...
+// The microfacet BxDFs are really fragile in the tests. They seem to work well enough
+// though, when manually inspecting observed and expected frequencies...
 /*
 TEST_CASE("GGX Reflection Sampling") {
     for (int i = 0; i < 10; i++) {
