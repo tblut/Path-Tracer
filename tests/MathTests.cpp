@@ -156,6 +156,12 @@ TEST_CASE("lerp") {
 TEST_CASE("remap") {
     CHECK(pt::remap(0.0f, 0.0f, 1.0f, -1.0f, 1.0f) == pt::Approx(-1.0f));
     CHECK(pt::remap(0.0f, -1.0f, 1.0f, 0.0f, 1.0f) == pt::Approx(0.5f));
+
+    float remapped = pt::remap(
+        pt::oneMinusEpsilon<float>,
+        -1.0f, pt::oneMinusEpsilon<float>,
+        0.0f, pt::oneMinusEpsilon<float>);
+    CHECK(remapped == pt::Approx(pt::oneMinusEpsilon<float>));
 }
 
 TEST_CASE("degrees") {
