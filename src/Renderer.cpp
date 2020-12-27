@@ -79,14 +79,14 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
 
     RayHit hit = scene.intersect(ray);
     if (hit.t < 0.0f) {
-        Vec3 c = lambda * backgroundColor_;
+        Vec3 c = backgroundColor_;
         assert(!std::isnan(c.r) && !std::isnan(c.g) && !std::isnan(c.b));
         assert(!std::isinf(c.r) && !std::isinf(c.g) && !std::isinf(c.b));
         assert(c.r >= 0.0f && c.g >= 0.0f && c.b >= 0.0f);
         return c;
     }
     if (hit.shape->isLight() && depth == 0) {
-        Vec3 c = lambda * hit.shape->material->getEmittance();
+        Vec3 c = hit.shape->material->getEmittance();
         assert(!std::isnan(c.r) && !std::isnan(c.g) && !std::isnan(c.b));
         assert(!std::isinf(c.r) && !std::isinf(c.g) && !std::isinf(c.b));
         assert(c.r >= 0.0f && c.g >= 0.0f && c.b >= 0.0f);
@@ -129,7 +129,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
                     float misWeight = powerHeuristic(1, lightPdf, 1, brdfPdf);
                     assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
                     assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
-                    color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / lightPdf;
+                    color += light->material->getEmittance() * brdf * dotNL * misWeight / lightPdf;
                     assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
                     assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
                     assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
@@ -156,7 +156,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
                     float misWeight = powerHeuristic(1, brdfPdf, 1, lightPdf);
                     assert(lightPdf > 0.0f && !std::isinf(lightPdf) && !std::isnan(lightPdf));
                     assert(brdfPdf > 0.0f && !std::isinf(brdfPdf) && !std::isnan(brdfPdf));
-                    color += lambda * light->material->getEmittance() * brdf * dotNL * misWeight / brdfPdf;
+                    color += light->material->getEmittance() * brdf * dotNL * misWeight / brdfPdf;
                     assert(!std::isnan(color.r) && !std::isnan(color.g) && !std::isnan(color.b));
                     assert(!std::isinf(color.r) && !std::isinf(color.g) && !std::isinf(color.b));
                     assert(color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
