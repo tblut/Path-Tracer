@@ -158,6 +158,43 @@ TEST_CASE("GGX Normal Distribution (D Term)") {
 }
 
 
+TEST_CASE("White-Furnace Test Lambert") {
+    float integral = pt::adaptiveSimpson2D([&](float theta, float phi) {
+        return pt::diffuse_Lambert(pt::Vec3(1.0f)).x * pt::abs(std::cos(theta)) * std::sin(theta);
+    }, 0.0f, 0.5f * pt::pi<float>, 0.0f, 2.0f * pt::pi<float>, 1e-8f, 8);
+
+    REQUIRE(integral == pt::Approx(1.0f).epsilon(1e-2f));
+}
+
+
+TEST_CASE("Weak White-Furnace Test GGX") {
+    pt::RandomSeries rng;
+    for (int i = 0; i < 10; i++) {
+        // Intentionally start with a=0.1, since the numerical integration has problems with
+        // smaller alpha values due to dirac-delta-like spikes.
+        float alpha = 0.1f + (i / 10.0f) * (1.0f - 0.1f);
+
+        for (int k = 0; k < 5; k++) {
+            pt::Vec3 wo = pt::sampleCosineHemisphere(rng.uniformFloat(), rng.uniformFloat());
+
+            float integral = pt::adaptiveSimpson2D([&](float theta, float phi) {
+                pt::Vec3 wi = pt::Vec3::fromSpherical(theta, phi);
+                pt::Vec3 wh = pt::normalize(wo + wi);
+                if (pt::cosTheta(wh) < 0.0f) {
+                    return 0.0f;
+                }
+                
+                float G1 = pt::G1_Smith_GGX(wo, alpha);
+                float D = pt::D_GGX(wh, alpha);
+                return G1 * D / (4.0f * pt::abs(pt::cosTheta(wo))) * std::sin(theta);
+            }, 0.0f, pt::pi<float>, 0.0f, 2.0f * pt::pi<float>, 1e-8f, 8);
+            
+            REQUIRE(integral == pt::Approx(1.0f).epsilon(1e-2f));
+        } 
+    }
+}
+
+
 TEST_CASE("Uniform Sphere Sampling") {
     testBxdfGoodnessOfFit(
         [](const pt::Vec3& wi, const pt::Vec3& wo) {
