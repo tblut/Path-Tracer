@@ -136,7 +136,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng,
             if (lightHit.shape == light && lightHit.shape != hit.shape) {
                 lightPdf = light->pdf(intersectionPoint);
                 if (lightPdf > 0.0f) {
-                    float misWeight = powerHeuristic(1, brdfPdf, 1, lightPdf);
+                    float misWeight = powerHeuristic(1, bsdfPdf, 1, lightPdf);
                     Vec3 bsdf = material->evaluate(wi, wo);
                     color += lambda * light->material->getEmittance() * bsdf * dotNL * misWeight / bsdfPdf;
                     assert(isFinite(color) && color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
