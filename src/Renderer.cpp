@@ -101,12 +101,10 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
                 rng.uniformFloat(), rng.uniformFloat(), &lightPdf);
             Vec3 wi = basis.worldToLocal(lightDir);
 
-            float dotNL = abs(cosTheta(wi));
-            if (dotNL > 0.0f && lightPdf > 0.0f) {
+            float cosThetaI = abs(cosTheta(wi));
+            if (cosThetaI > 0.0f && lightPdf > 0.0f) {
                 Ray lightRay;
-                lightRay.origin = cosTheta(wi) > 0.0f
-                    ? intersectionPoint + hit.normal * 0.001f
-                    : intersectionPoint - hit.normal * 0.001f;
+                lightRay.origin = intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f;
                 lightRay.direction = lightDir;
 
                 RayHit lightHit = scene.intersect(lightRay);
@@ -115,7 +113,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
                     if (bsdfPdf > 0.0f) {
                         float misWeight = powerHeuristic(1, lightPdf, 1, bsdfPdf);
                         Vec3 bsdf = material->evaluate(wi, wo);
-                        directIllumination += light->material->getEmittance() * bsdf * dotNL * misWeight / lightPdf;
+                        directIllumination += light->material->getEmittance() * bsdf * cosThetaI * misWeight / lightPdf;
                         assert(isFinite(directIllumination) && directIllumination.r >= 0.0f
                             && directIllumination.g >= 0.0f && directIllumination.b >= 0.0f);
                     }
@@ -126,12 +124,10 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
             // MIS brdf sampling
             float bsdfPdf;
             wi = material->sampleDirection(wo, rng.uniformFloat(), rng.uniformFloat(), &bsdfPdf);
-            dotNL = abs(cosTheta(wi));
-            if (dotNL > 0.0f && bsdfPdf > 0.0f) {
+            cosThetaI = abs(cosTheta(wi));
+            if (cosThetaI > 0.0f && bsdfPdf > 0.0f) {
                 Ray lightRay;
-                lightRay.origin = cosTheta(wi) > 0.0f
-                    ? intersectionPoint + hit.normal * 0.001f
-                    : intersectionPoint - hit.normal * 0.001f;
+                lightRay.origin = intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f;
                 lightRay.direction = basis.localToWorld(wi);
 
                 RayHit lightHit = scene.intersect(lightRay);
@@ -140,7 +136,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
                     if (lightPdf > 0.0f) {
                         float misWeight = powerHeuristic(1, bsdfPdf, 1, lightPdf);
                         Vec3 bsdf = material->evaluate(wi, wo);
-                        directIllumination += light->material->getEmittance() * bsdf * dotNL * misWeight / bsdfPdf;
+                        directIllumination += light->material->getEmittance() * bsdf * cosThetaI * misWeight / bsdfPdf;
                         assert(isFinite(directIllumination) && directIllumination.r >= 0.0f
                             && directIllumination.g >= 0.0f && directIllumination.b >= 0.0f);
                     }
@@ -157,13 +153,13 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
         // Indirect illumination
         float pdf = -inf<float>;
         Vec3 wi = material->sampleDirection(wo, rng.uniformFloat(), rng.uniformFloat(), &pdf);
-        float dotNL = abs(cosTheta(wi));
-        if (dotNL <= 0.0f || pdf <= 0.0f) {
+        float cosThetaI = abs(cosTheta(wi));
+        if (cosThetaI <= 0.0f || pdf <= 0.0f) {
             break;
         }
 
         Vec3 bsdf = material->evaluate(wi, wo);
-        lambda *= bsdf * dotNL / pdf;
+        lambda *= bsdf * cosThetaI / pdf;
         assert(isFinite(lambda) && lambda.r >= 0.0f && lambda.g >= 0.0f && lambda.b >= 0.0f);
 
         float rrProb = min(0.95f, max(lambda.r, max(lambda.g, lambda.b)));
@@ -173,9 +169,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
                 lambda /= rrProb;
             }
 
-            ray.origin = cosTheta(wi) > 0.0f
-                ? intersectionPoint + hit.normal * 0.001f
-                : intersectionPoint - hit.normal * 0.001f;
+            ray.origin = intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f;
             ray.direction = basis.localToWorld(wi);
         }
         else {
