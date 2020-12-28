@@ -34,7 +34,7 @@ This is a CPU-only, unidirectional path tracer. Most of the rendering code is un
 - [Reflections and Refractions in Ray Tracing (2006), Bram de Greve](https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf)
 - [Microfacet Models for Refraction through Rough Surfaces (2007), Bruce Walter et al.](https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf)
 - [Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs (2014), Eric Heitz](http://jcgt.org/published/0003/02/03/)
-- [Sampling the GGX Distribution of Visible Normals (2018), Eric Heitz](http://jcgt.org/published/0007/04/01/paper.pdf)
+- [Sampling the GGX Distribution of Visible Normals (2018), Eric Heitz](http://jcgt.org/published/0007/04/01/)
 
 ## Library licenses
 - std_image_write.h : v1.15 - public domain image writer - [Github link](https://github.com/nothings/stb/blob/master/stb_image_write.h)
