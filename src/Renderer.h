@@ -29,8 +29,7 @@ public:
 private:
     void workerThreadMain(uint32_t id, const Scene& scene,
         const Camera& camera, Film& film, std::vector<Film::Tile>& filmTiles);
-    Vec3 radiance(const Scene& scene, RandomSeries& rng,
-        const Ray& ray, Vec3 lambda, uint32_t depth = 0) const;
+    Vec3 radiance(const Scene& scene, RandomSeries& rng, Ray ray) const;
 
     uint32_t maxDepth_ = 10;
     uint32_t samplesPerPixel_ = 16;
