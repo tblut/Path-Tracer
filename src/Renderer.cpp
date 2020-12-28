@@ -72,9 +72,9 @@ void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
 Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
     Vec3 lambda(1.0f);
     Vec3 color(0.0f);
+    RayHit hit = scene.intersect(ray);
 
     for (uint32_t depth = 0; depth <= maxDepth_; depth++) {
-        RayHit hit = scene.intersect(ray);
         if (hit.t < 0.0f) {
             color += lambda * backgroundColor_;
             break;
@@ -90,91 +90,76 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
         OrthonormalBasis basis(hit.normal);
         wo = basis.worldToLocal(wo);
 
-        { // Direct illuminaton
-            Vec3 directIllumination(0.0f);
-            size_t lightIndex = static_cast<size_t>(rng.uniformFloat() * scene.getNumLights());
-            const Shape* light = scene.getLights()[lightIndex];
+        // Sample a single light source
+        size_t lightIndex = static_cast<size_t>(rng.uniformFloat() * scene.getNumLights());
+        const Shape* light = scene.getLights()[lightIndex];
+        float lightProb = 1.0f / scene.getNumLights();
 
-            // MIS light sampling
-            float lightPdf;
-            Vec3 lightDir = light->sampleDirection(intersectionPoint,
-                rng.uniformFloat(), rng.uniformFloat(), &lightPdf);
-            Vec3 wi = basis.worldToLocal(lightDir);
+        // MIS light sampling
+        float lightPdf;
+        Vec3 lightDir = light->sampleDirection(intersectionPoint,
+            rng.uniformFloat(), rng.uniformFloat(), &lightPdf);
+        Vec3 wi = basis.worldToLocal(lightDir);
 
-            float cosThetaI = abs(cosTheta(wi));
-            if (cosThetaI > 0.0f && lightPdf > 0.0f) {
-                Ray lightRay;
-                lightRay.origin = intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f;
-                lightRay.direction = lightDir;
+        float cosThetaI = abs(cosTheta(wi));
+        if (cosThetaI > 0.0f && lightPdf > 0.0f) {
+            Ray lightRay;
+            lightRay.origin = intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f;
+            lightRay.direction = lightDir;
 
-                RayHit lightHit = scene.intersect(lightRay);
-                if (lightHit.shape == light && lightHit.shape != hit.shape) {
-                    float bsdfPdf = material->pdf(wi, wo);
-                    if (bsdfPdf > 0.0f) {
-                        float misWeight = powerHeuristic(1, lightPdf, 1, bsdfPdf);
-                        Vec3 bsdf = material->evaluate(wi, wo);
-                        directIllumination += light->material->getEmittance() * bsdf * cosThetaI * misWeight / lightPdf;
-                        assert(isFinite(directIllumination) && directIllumination.r >= 0.0f
-                            && directIllumination.g >= 0.0f && directIllumination.b >= 0.0f);
-                    }
+            RayHit lightHit = scene.intersect(lightRay);
+            if (lightHit.shape == light && lightHit.shape != hit.shape) {
+                float bsdfPdf = material->pdf(wi, wo);
+                if (bsdfPdf > 0.0f) {
+                    float misWeight = powerHeuristic(1, lightPdf, 1, bsdfPdf);
+                    Vec3 bsdf = material->evaluate(wi, wo);
+                    color += lambda * light->material->getEmittance() * bsdf * cosThetaI * misWeight / (lightPdf * lightProb);
+                    assert(isFinite(color) && color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
                 }
             }
-
-            // TODO: Reuse BSDF ray for MIS direct lighting and indirect lighting
-            // MIS brdf sampling
-            float bsdfPdf;
-            wi = material->sampleDirection(wo, rng.uniformFloat(), rng.uniformFloat(), &bsdfPdf);
-            cosThetaI = abs(cosTheta(wi));
-            if (cosThetaI > 0.0f && bsdfPdf > 0.0f) {
-                Ray lightRay;
-                lightRay.origin = intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f;
-                lightRay.direction = basis.localToWorld(wi);
-
-                RayHit lightHit = scene.intersect(lightRay);
-                if (lightHit.shape == light && lightHit.shape != hit.shape) {
-                    lightPdf = light->pdf(intersectionPoint);
-                    if (lightPdf > 0.0f) {
-                        float misWeight = powerHeuristic(1, bsdfPdf, 1, lightPdf);
-                        Vec3 bsdf = material->evaluate(wi, wo);
-                        directIllumination += light->material->getEmittance() * bsdf * cosThetaI * misWeight / bsdfPdf;
-                        assert(isFinite(directIllumination) && directIllumination.r >= 0.0f
-                            && directIllumination.g >= 0.0f && directIllumination.b >= 0.0f);
-                    }
-                }
-            }
-
-            float lightProb = 1.0f / scene.getNumLights();
-            directIllumination /= lightProb;
-
-            color += lambda * directIllumination;
-            assert(isFinite(color) && color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
         }
 
-        // Indirect illumination
-        float pdf = -inf<float>;
-        Vec3 wi = material->sampleDirection(wo, rng.uniformFloat(), rng.uniformFloat(), &pdf);
-        float cosThetaI = abs(cosTheta(wi));
-        if (cosThetaI <= 0.0f || pdf <= 0.0f) {
+        // Sample BSDF for direct and indirect illumination
+        float bsdfPdf;
+        wi = material->sampleDirection(wo, rng.uniformFloat(), rng.uniformFloat(), &bsdfPdf);
+        cosThetaI = abs(cosTheta(wi));
+        if (cosThetaI <= 0.0f || bsdfPdf <= 0.0f) {
             break;
         }
-
         Vec3 bsdf = material->evaluate(wi, wo);
-        lambda *= bsdf * cosThetaI / pdf;
+
+        // MIS BSDF sampling
+        Ray lightRay;
+        lightRay.origin = intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f;
+        lightRay.direction = basis.localToWorld(wi);
+
+        RayHit lightHit = scene.intersect(lightRay);
+        if (lightHit.shape == light && lightHit.shape != hit.shape) {
+            lightPdf = light->pdf(intersectionPoint);
+            if (lightPdf > 0.0f) {
+                float misWeight = powerHeuristic(1, bsdfPdf, 1, lightPdf);
+                color += lambda * light->material->getEmittance() * bsdf * cosThetaI * misWeight / (bsdfPdf * lightProb);
+                assert(isFinite(color) && color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
+            }
+        }
+
+        // Update path throughput
+        lambda *= bsdf * cosThetaI / bsdfPdf;
         assert(isFinite(lambda) && lambda.r >= 0.0f && lambda.g >= 0.0f && lambda.b >= 0.0f);
 
+        // Russian roulette
         float rrProb = min(0.95f, max(lambda.r, max(lambda.g, lambda.b)));
-        if (depth < minRRDepth_ || rng.uniformFloat() <= rrProb) {
-            if (depth >= minRRDepth_) {
-                assert(rrProb > 0.0f && std::isfinite(rrProb));
-                lambda /= rrProb;
+        assert(rrProb > 0.0f && std::isfinite(rrProb));
+        if (depth >= minRRDepth_) {
+            if (rng.uniformFloat() > rrProb) {
+                break;
             }
+            lambda /= rrProb;
+        }
 
-            ray.origin = intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f;
-            ray.direction = basis.localToWorld(wi);
-        }
-        else {
-            break;
-        }
+        // Reuse ray and hit from MIS
+        ray = lightRay;
+        hit = lightHit;
     }
 
     return color;
