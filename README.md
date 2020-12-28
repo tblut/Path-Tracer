@@ -1,5 +1,5 @@
 # Path-Tracer
-This is a CPU-only, unidirectional path tracer. Most of the rendering code is unoptimized for the sake of clarity and debugging.
+This is a CPU-only, unidirectional path tracer. Most of the shading code is unoptimized for the sake of clarity and debugging.
 
 ![Render](render_5000spp.png)
 
