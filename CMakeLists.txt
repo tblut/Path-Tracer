@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(PathTracer LANGUAGES CXX)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Common functions
@@ -30,7 +31,12 @@ add_library(PathTracerLib STATIC ${SOURCE_FILES})
 target_include_directories(PathTracerLib PUBLIC ${CMAKE_SOURCE_DIR}/src)
 target_compile_features(PathTracerLib PUBLIC cxx_std_17)
 if(MSVC)
-	target_compile_options(PathTracerLib PUBLIC /MP /GR- /Oi /fp:fast)
+	include(CheckAvxSupport)
+    check_avx_support()
+	target_compile_options(PathTracerLib PUBLIC /MP /GR- /Oi /fp:fast ${AVX_FLAGS})
+else()
+	target_compile_options(PathTracerLib PUBLIC -ffast-math -march:native)
+	target_link_libraries(PathTracerLib PUBLIC pthread)
 endif()
 enable_ipo(PathTracerLib)
 
