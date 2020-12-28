@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     auto start = std::chrono::high_resolution_clock::now();
     renderer.render(scene, camera, film);
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Render completed in " << (end - start).count() * 1.0e-9 << " sec\n";
-    film.saveToFile("test.png");
+    std::cout << "Render completed in " << (end - start).count() * 1.0e-9 << " seconds\n";
+    film.saveToFile("output.png");
     return 0;
 }

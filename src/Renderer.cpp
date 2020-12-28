@@ -6,6 +6,7 @@
 #include "Shape.h"
 #include "OrthonormalBasis.h"
 #include "BSDF.h"
+#include "ProgressBar.h"
 
 namespace {
 
@@ -22,12 +23,15 @@ namespace pt {
 
 void Renderer::render(const Scene& scene, const Camera& camera, Film& film) {
     auto filmTiles = film.getTiles(tileWidth_, tileHeight_);
-    uint32_t numThreads = std::thread::hardware_concurrency();
+    std::atomic<size_t> nextTileIndex = 0;
+    uint32_t numThreads = max(1u, std::thread::hardware_concurrency());
     workerThreads_.reserve(numThreads);
 
+    ProgressBar progressBar(filmTiles.size(), "Rendering");
     for (uint32_t i = 0; i < numThreads; i++) {
         workerThreads_.emplace_back([&] {
-            workerThreadMain(i, scene, camera, film, filmTiles);
+            workerThreadMain(i, scene, camera, film,
+                filmTiles, nextTileIndex, progressBar);
         });
     }
 
@@ -38,21 +42,18 @@ void Renderer::render(const Scene& scene, const Camera& camera, Film& film) {
 }
 
 void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
-        const Camera& camera, Film& film, std::vector<Film::Tile>& filmTiles) {
+        const Camera& camera, Film& film, std::vector<Film::Tile>& filmTiles,
+        std::atomic<size_t>& nextTileIndex, ProgressBar& progressBar) {
     RandomSeries rng;
     rng.seed(RandomSeries::defaultState * (id + 1),
         RandomSeries::defaultInc * (id - 1));
 
     while (true) {
-        Film::Tile tile;
-        {
-            std::scoped_lock<std::mutex> lock(mutex_);
-            if (filmTiles.empty()) {
-                break;
-            }
-            tile = filmTiles.back();
-            filmTiles.pop_back();
+        size_t tileIndex = nextTileIndex.fetch_add(1, std::memory_order_relaxed);
+        if (tileIndex >= filmTiles.size()) {
+            break;
         }
+        Film::Tile tile = filmTiles[tileIndex];
 
         for (uint32_t y = tile.startY; y <= tile.endY; y++) {
             for (uint32_t x = tile.startX; x <= tile.endX; x++) {
@@ -66,6 +67,8 @@ void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
                 }
             }
         }
+
+        progressBar.update();
     }
 }
 

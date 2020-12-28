@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <thread>
-#include <mutex>
+#include <atomic>
 #include <cstdint>
 
 namespace pt {
@@ -15,6 +15,7 @@ namespace pt {
 class Scene;
 class Camera;
 class Film;
+class ProgressBar;
 
 class Renderer {
 public:
@@ -28,7 +29,8 @@ public:
 
 private:
     void workerThreadMain(uint32_t id, const Scene& scene,
-        const Camera& camera, Film& film, std::vector<Film::Tile>& filmTiles);
+        const Camera& camera, Film& film, std::vector<Film::Tile>& filmTiles,
+        std::atomic<size_t>& nextTileIndex, ProgressBar& progressBar);
     Vec3 radiance(const Scene& scene, RandomSeries& rng, Ray ray) const;
 
     uint32_t maxDepth_ = 10;
@@ -38,7 +40,6 @@ private:
     uint32_t tileHeight_ = 64;
     Vec3 backgroundColor_ = Vec3(0.0f);
     std::vector<std::thread> workerThreads_;
-    std::mutex mutex_;
 };
 
 } // namespace pt
