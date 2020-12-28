@@ -160,7 +160,8 @@ TEST_CASE("GGX Normal Distribution (D Term)") {
 
 TEST_CASE("White-Furnace Test Lambert") {
     float integral = pt::adaptiveSimpson2D([&](float theta, float phi) {
-        return pt::diffuse_Lambert(pt::Vec3(1.0f)).x * pt::abs(std::cos(theta)) * std::sin(theta);
+        float d = pt::diffuse_Lambert(pt::Vec3(1.0f), pt::Vec3(1.0f), pt::Vec3(1.0f)).x;
+        return d * pt::abs(std::cos(theta)) * std::sin(theta);
     }, 0.0f, 0.5f * pt::pi<float>, 0.0f, 2.0f * pt::pi<float>, 1e-8f, 8);
 
     REQUIRE(integral == pt::Approx(1.0f).epsilon(1e-2f));
