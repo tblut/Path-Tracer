@@ -151,6 +151,7 @@ constexpr Vector3<T> reflect(const Vector3<T>& w, const Vector3<T>& n) {
     return static_cast<T>(2) * dot(w, n) * n - w;
 }
 
+// NOTE: eta = eta_i / eta_t
 template <typename T>
 inline bool refract(const Vector3<T>& wi, const Vector3<T>& n, T eta, Vector3<T>& wt) {
     T cosThetaI = dot(n, wi);
