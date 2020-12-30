@@ -39,6 +39,7 @@ Vec2 sampleCocentricDisk(float u1, float u2) {
 
 } // namespace
 
+
 namespace pt {
 
 Camera::Camera(float fovY, float aspect, float aperture, float focalDistance, const Mat4& viewMatrix)

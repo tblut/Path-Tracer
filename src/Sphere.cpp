@@ -58,7 +58,7 @@ Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) cons
     return dir;
 }
 
-float Sphere::pdf(const Vec3& p) const {
+float Sphere::pdf(const Vec3& p, const Vec3& wi) const {
     float sin2ThetaMax = radiusSq_ / lengthSq(center_ - p);
     float cosThetaMax = std::sqrt(max(0.0f, 1.0f - sin2ThetaMax));
     return 1.0f / (2.0f * pi<float> * (1.0f - cosThetaMax));

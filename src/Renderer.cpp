@@ -138,7 +138,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
 
         RayHit lightHit = scene.intersect(lightRay);
         if (lightHit.shape == light && lightHit.shape != hit.shape) {
-            lightPdf = light->pdf(intersectionPoint);
+            lightPdf = light->pdf(intersectionPoint, lightRay.direction);
             if (lightPdf > 0.0f) {
                 float misWeight = powerHeuristic(1, bsdfPdf, 1, lightPdf);
                 color += lambda * light->material->getEmittance() * bsdf * cosThetaI * misWeight / (bsdfPdf * lightProb);

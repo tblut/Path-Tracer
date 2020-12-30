@@ -5,6 +5,7 @@
 #include "Matrix4x4.h"
 #include "Material.h"
 #include "Sphere.h"
+#include "Triangle.h"
 #include "Ray.h"
 #include "ColorUtils.h"
 
@@ -17,7 +18,7 @@ int main(int argc, char** argv) {
         pt::radians(60.0f),
         film.getWidth() / static_cast<float>(film.getHeight()),
         0.0f, 4.5f,
-        pt::lookAt(pt::Vec3(0.0f, 0.0f, 5.0f), pt::Vec3(0.0f, 0.0f, 0.0f), pt::Vec3(0, 1, 0))
+        pt::lookAt(pt::Vec3(0.0f, 0.0f, 4.8f), pt::Vec3(0.0f, 0.0f, 0.0f), pt::Vec3(0, 1, 0))
     );
 
     pt::Material redMat{     pt::Vec3(0.8f, 0.0f, 0.0f), 1.0f, 0.0f, 0.0f, 1.5f, pt::Vec3(0) };
@@ -28,23 +29,55 @@ int main(int argc, char** argv) {
     pt::Material lightMat{ pt::Vec3(0), 1.0f, 0.0f, 0.0f, 1.5f, pt::Vec3(12) };
     pt::Material lightMat2{ pt::Vec3(0), 1.0f, 0.0f, 0.0f, 1.5f, pt::Vec3(6) };
 
-    pt::Sphere left(pt::Vec3(-1002, 0, 0), 1000, redMat);
-    pt::Sphere right(pt::Vec3(1002, 0, 0), 1000, greenMat);
-    pt::Sphere back(pt::Vec3(0, 0, -1002), 1000, whiteMat);
-    pt::Sphere top(pt::Vec3(0, 1002, 0), 1000, whiteMat);
-    pt::Sphere bottom(pt::Vec3(0, -1002, 0), 1000, whiteMat);
-    pt::Sphere light(pt::Vec3(0.0f, 2.7f, 0.0f), 1.0f, lightMat);
-    pt::Sphere light2(pt::Vec3(-1, 1.f, -1.5f), 0.1f, lightMat2);
     pt::Sphere sphere1(pt::Vec3(-0.75f, -1.2f, -0.75f), 0.75f, plasticMat);
     pt::Sphere sphere2(pt::Vec3(0.8f, -1.25f, 0.5f), 0.75f, metallMat);
 
+    pt::Vec3 fbl(-2.0f, -2.0f, 2.2f);
+    pt::Vec3 fbr(2.0f, -2.0f, 2.2f);
+    pt::Vec3 ftl(-2.0f, 2.0f, 2.2f);
+    pt::Vec3 ftr(2.0f, 2.0f, 2.2f);
+    pt::Vec3 bbl(-2.0f, -2.0f, -2.0f);
+    pt::Vec3 bbr(2.0f, -2.0f, -2.0f);
+    pt::Vec3 btl(-2.0f, 2.0f, -2.0f);
+    pt::Vec3 btr(2.0f, 2.0f, -2.0f);
+
+    pt::Triangle left1(bbl, ftl, fbl, redMat);
+    pt::Triangle left2(bbl, btl, ftl, redMat);
+    pt::Triangle right1(bbr, fbr, btr, greenMat);
+    pt::Triangle right2(btr, fbr, ftr, greenMat);
+    pt::Triangle back1(bbl, bbr, btr, whiteMat);
+    pt::Triangle back2(bbl, btr, btl, whiteMat);
+    pt::Triangle top1(ftl, btr, ftr, whiteMat);
+    pt::Triangle top2(ftl, btl, btr, whiteMat);
+    pt::Triangle bottom1(fbl, fbr, bbr, whiteMat);
+    pt::Triangle bottom2(fbl, bbr, bbl, whiteMat);
+
+    float size = 0.75f;
+    pt::Triangle light1(
+        pt::Vec3(-size, 1.95f, -size),
+        pt::Vec3(-size, 1.95f,  size),
+        pt::Vec3( size, 1.95f,  size),
+        lightMat
+    );
+    pt::Triangle light2(
+        pt::Vec3( size, 1.95f,  size),
+        pt::Vec3( size, 1.95f, -size),
+        pt::Vec3(-size, 1.95f, -size),
+        lightMat
+    );
+
     pt::Scene scene;
-    scene.add(left);
-    scene.add(right);
-    scene.add(back);
-    scene.add(top);
-    scene.add(bottom);
-    scene.add(light);
+    scene.add(left1);
+    scene.add(left2);
+    scene.add(right1);
+    scene.add(right2);
+    scene.add(back1);
+    scene.add(back2);
+    scene.add(top1);
+    scene.add(top2);
+    scene.add(bottom1);
+    scene.add(bottom2);
+    scene.add(light1);
     scene.add(light2);
     scene.add(sphere1);
     scene.add(sphere2);

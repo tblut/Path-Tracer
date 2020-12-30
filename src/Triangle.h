@@ -1,16 +1,16 @@
 #pragma once
 
-#include "Shape.h"
-#include "MathUtils.h"
 #include "Vector3.h"
-#include "Ray.h"
+#include "Shape.h"
+
+#include <vector>
 
 namespace pt {
 
-class Sphere : public Shape {
+class Triangle : public Shape {
 public:
-    Sphere(const Vec3& center, float radius, const Material& material);
-    virtual ~Sphere() = default;
+    Triangle(const Vec3& p0, const Vec3& p1, const Vec3& p2, const Material& material);
+    virtual ~Triangle() = default;
 
     virtual float intersect(const Ray& ray) const override;
     virtual Vec3 normalAt(const Vec3& p) const override;
@@ -18,9 +18,9 @@ public:
     virtual float pdf(const Vec3& p, const Vec3& wi) const override;
 
 private:
-    Vec3 center_;
-    float radius_;
-    float radiusSq_;
+    Vec3 p0_, p1_, p2_;
+    Vec3 normal_;
+    float area_;
 };
 
 } // namespace pt
