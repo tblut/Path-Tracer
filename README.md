@@ -39,3 +39,4 @@ This is a CPU-only, unidirectional path tracer. Most of the shading code is unop
 ## Library licenses
 - std_image_write.h : v1.15 - public domain image writer - [Github link](https://github.com/nothings/stb/blob/master/stb_image_write.h)
 - catch.hpp : v2.13.3 - BSL-1.0 License - [Github link](https://github.com/catchorg/Catch2)
+- json.hpp : v3.9.1 - MIT License - [Github link](https://github.com/nlohmann/json)

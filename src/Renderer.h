@@ -34,7 +34,7 @@ private:
     Vec3 radiance(const Scene& scene, RandomSeries& rng, Ray ray) const;
 
     uint32_t maxDepth_ = 10;
-    uint32_t samplesPerPixel_ = 16;
+    uint32_t samplesPerPixel_ = 256;
     uint32_t minRRDepth_ = 3;
     uint32_t tileWidth_ = 64;
     uint32_t tileHeight_ = 64;

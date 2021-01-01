@@ -7,7 +7,7 @@ namespace pt {
 class Material {
 public:
     Material(const Vec3& baseColor, float roughness, float metalness,
-        float transmission = 0.0f, float ior = 1.0f,
+        float transmission = 0.0f, float ior = 1.5f,
         const Vec3& emittance = Vec3(0.0f));
 
     // All vectors are expected to be in local space

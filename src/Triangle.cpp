@@ -12,6 +12,19 @@ Vec2 sampleUniformTriangle(float u1, float u2) {
     return Vec2(1.0f - sqrtU1, u2 * sqrtU1);
 }
 
+// See: A Low-Distortion Map Between Triangle and Square (2019), Eric Heitz
+/*Vec2 sampleUniformTriangle(float u1, float u2) {
+    if (u2 > u1) {
+        u1 *= 0.5f;
+        u2 -= u1;
+    }
+    else {
+        u2 *= 0.5f;
+        u1 -= u2;
+    }
+    return Vec2(u1, u2);
+}
+*/
 float triangleArea(const Vec3& p0, const Vec3& p1, const Vec3& p2) {
     return 0.5f * length(cross(p1 - p0, p2 - p0));
 }
@@ -91,14 +104,27 @@ Vec3 Triangle::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) co
     Vec3 w = normalize(q - p);
 
     if (pdf) {
-        // pdf = 1/A * |T|^-1 = 1/A * r^2/(cos(theta)*A) = r^2/cos(theta)
-        *pdf = lengthSq(q - p) / abs(dot(-w, normal_));
+        // TODO: Make one-sidedness optional
+        float cosThetaI = dot(-w, normal_);
+        if (cosThetaI <= 0.0f) {
+            *pdf = 0.0f;
+        }
+        else {
+            // pdf = 1/A * |T|^-1 = 1/A * r^2/(cos(theta)*A) = r^2/cos(theta)
+            *pdf = lengthSq(q - p) / cosThetaI;
+        }
     }
 
     return w;
 }
 
 float Triangle::pdf(const Vec3& p, const Vec3& wi) const {
+    // TODO: Make one-sidedness optional
+    float cosThetaI = dot(-wi, normal_);
+    if (cosThetaI <= 0.0f) {
+        return 0.0f;
+    }
+
     Ray ray(p, wi);
     float t = intersect(ray);
     if (t < 0.0f) {
@@ -106,7 +132,6 @@ float Triangle::pdf(const Vec3& p, const Vec3& wi) const {
     }
 
     float distSq = lengthSq(ray.at(t) - p);
-    float cosThetaI = abs(dot(-wi, normal_));
     return distSq / (cosThetaI * area_);
 }
 

@@ -1,0 +1,108 @@
+{
+    "film": {
+        "size": [640, 480]
+    },
+    "camera": {
+        "lookAt": [0, 0, 4.75,  0, 0, -1,  0, 1, 0],
+        "fovY": 60,
+        "aspect": 0,
+        "aperture": 0,
+        "focalDistance": 0
+    },
+    "renderer": {
+        "maxDepth": 10,
+        "samplesPerPixel": 2048,
+        "minRRDepth": 3,
+        "backgroundColor": [0, 0, 0],
+        "tileSize": [64, 64]
+    },
+    "scene": {
+        "materials": [
+            {
+                "name": "red",
+                "baseColor": [0.8, 0, 0],
+                "roughness": 1.0
+            },
+            {
+                "name": "green",
+                "baseColor": [0, 0.8, 0],
+                "roughness": 1.0
+            },
+            {
+                "name": "white",
+                "baseColor": [0.8, 0.8, 0.8],
+                "roughness": 1.0
+            },
+            {
+                "name": "metal",
+                "baseColor": [1.0, 0.9, 0.8],
+                "roughness": 0.4,
+                "metalness": 1.0
+            },
+            {
+                "name": "glass",
+                "baseColor": [1, 0.9, 0.8],
+                "roughness": 0.0,
+                "transmission": 1.0
+            },
+            {
+                "name": "light",
+                "baseColor": [1, 1, 1],
+                "roughness": 1.0,
+                "emittance": 12.0
+            }
+        ],
+        "shapes": [
+            {
+                "type": "triangleMesh",
+                "vertices": [-0.6,1.999,-0.6,  0.6,1.999,-0.6,  0.6,1.999,0.6,  -0.6,1.999,0.6],
+                "indices": [0, 1, 2, 0, 2, 3],
+                "material": "light"
+            },
+
+            { // left wall
+                "type": "triangleMesh",
+                "vertices": [-2,-2,2.2,  -2,-2,-2,  -2,2,-2,  -2,2,2.2],
+                "indices": [0, 1, 2, 0, 2, 3],
+                "material": "red"
+            },
+            { // right wall
+                "type": "triangleMesh",
+                "vertices": [2,-2,2.2,  2,2,2.2,  2,2,-2,  2,-2,-2],
+                "indices": [0, 1, 2, 0, 2, 3],
+                "material": "green"
+            },
+            { // floor
+                "type": "triangleMesh",
+                "vertices": [-2,-2,2.2,  2,-2,2.2,  2,-2,-2,  -2,-2,-2],
+                "indices": [0, 1, 2, 0, 2, 3],
+                "material": "white"
+            },
+            { // ceiling
+                "type": "triangleMesh",
+                "vertices": [-2,2,2.2,  -2,2,-2,  2,2,-2,  2,2,2.2],
+                "indices": [0, 1, 2, 0, 2, 3],
+                "material": "white"
+            },
+            { // back wall
+                "type": "triangleMesh",
+                "vertices": [-2,-2,-2,  2,-2,-2,  2,2,-2,  -2,2,-2],
+                "indices": [0, 1, 2, 0, 2, 3],
+                "material": "white"
+            },
+
+            {
+                "type": "sphere",
+                "center": [-0.75, -1.2, -0.75],
+                "radius": 0.75,
+                "material": "metal"
+            },
+            {
+                "type": "sphere",
+                "center": [0.8, -1.25, 0.5],
+                "radius": 0.75,
+                "material": "glass"
+            }
+        ]
+    }
+}

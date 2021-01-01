@@ -48,6 +48,10 @@ add_executable(PathTracer src/main.cpp)
 target_link_libraries(PathTracer PRIVATE PathTracerLib)
 enable_ipo(PathTracer)
 
+add_library(json INTERFACE)
+target_include_directories(json INTERFACE ${CMAKE_SOURCE_DIR}/extern/json/include)
+target_link_libraries(PathTracer PRIVATE json)
+
 # Unit tests
 enable_testing()
 add_library(Catch2 INTERFACE)
