@@ -3,6 +3,8 @@
 #include "Vector3.h"
 #include "Vector4.h"
 
+#include <cmath>
+
 namespace pt {
 
 template <typename T>
@@ -154,6 +156,62 @@ constexpr Matrix4x4<T> lookAt(const Vector3<T>& eye, const Vector3<T>& at, const
         x.x, x.y, x.z, -dot(x, eye),
         y.x, y.y, y.z, -dot(y, eye),
         z.x, z.y, z.z, -dot(z, eye),
+        static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1)
+    };
+}
+
+template <typename T>
+constexpr Matrix4x4<T> translation(const Vector3<T>& t) {
+    return {
+        static_cast<T>(1), static_cast<T>(0), static_cast<T>(0), t.x,
+        static_cast<T>(0), static_cast<T>(1), static_cast<T>(0), t.y,
+        static_cast<T>(0), static_cast<T>(0), static_cast<T>(1), t.z,
+        static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1)
+    };
+}
+
+template <typename T>
+constexpr Matrix4x4<T> scaling(const Vector3<T>& s) {
+    return {
+        s.x,               static_cast<T>(0), static_cast<T>(0), static_cast<T>(0),
+        static_cast<T>(0), s.y,               static_cast<T>(0), static_cast<T>(0),
+        static_cast<T>(0), static_cast<T>(0), s.z,               static_cast<T>(0),
+        static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1)
+    };
+}
+
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+constexpr Matrix4x4<T> rotationX(T radians) {
+    T cos = std::cos(radians);
+    T sin = std::sin(radians);
+    return {
+        static_cast<T>(1), static_cast<T>(0), static_cast<T>(0), static_cast<T>(0),
+        static_cast<T>(0), cos,              -sin,               static_cast<T>(0),
+        static_cast<T>(0), sin,               cos,               static_cast<T>(0),
+        static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1)
+    };
+}
+
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+constexpr Matrix4x4<T> rotationY(T radians) {
+    T cos = std::cos(radians);
+    T sin = std::sin(radians);
+    return {
+        cos,               static_cast<T>(0), sin,               static_cast<T>(0),
+        static_cast<T>(0), static_cast<T>(1), static_cast<T>(0), static_cast<T>(0),
+        -sin,              static_cast<T>(0), cos,               static_cast<T>(0),
+        static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1)
+    };
+}
+
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+constexpr Matrix4x4<T> rotationZ(T radians) {
+    T cos = std::cos(radians);
+    T sin = std::sin(radians);
+    return {
+        cos,              -sin,               static_cast<T>(0), static_cast<T>(0),
+        sin,               cos,               static_cast<T>(0), static_cast<T>(0),
+        static_cast<T>(0), static_cast<T>(0), static_cast<T>(1), static_cast<T>(0),
         static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1)
     };
 }

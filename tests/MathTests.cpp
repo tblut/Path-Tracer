@@ -565,4 +565,84 @@ TEST_CASE("Matrix Operators & Functions") {
             pt::Vec3(0.0f, 1.0f, 0.0f));
         REQUIRE(result == expected);
     }
+
+    SECTION("translation") {
+        auto expected = pt::ApproxMat4(
+            1.0f, 0.0f, 0.0f, 3.0f,
+            0.0f, 1.0f, 0.0f, 4.0f,
+            0.0f, 0.0f, 1.0f, 5.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+        auto result = pt::translation(pt::Vec3(3.0f, 4.0f, 5.0f));
+        REQUIRE(result == expected);
+
+        auto transformed = pt::transformPoint3x4(result, pt::Vec3(1.0f, 2.0f, 3.0f));
+        REQUIRE(transformed == pt::ApproxVec3(4.0f, 6.0f, 8.0f));
+
+        transformed = pt::transformVector3x4(result, pt::Vec3(1.0f, 2.0f, 3.0f));
+        REQUIRE(transformed == pt::ApproxVec3(1.0f, 2.0f, 3.0f));
+    }
+
+    SECTION("scaling") {
+        auto expected = pt::ApproxMat4(
+            3.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 4.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 5.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+        auto result = pt::scaling(pt::Vec3(3.0f, 4.0f, 5.0f));
+        REQUIRE(result == expected);
+
+        auto transformed = pt::transformPoint3x4(result, pt::Vec3(1.0f, 2.0f, 3.0f));
+        REQUIRE(transformed == pt::ApproxVec3(3.0f, 8.0f, 15.0f));
+
+        transformed = pt::transformVector3x4(result, pt::Vec3(1.0f, 2.0f, 3.0f));
+        REQUIRE(transformed == pt::ApproxVec3(3.0f, 8.0f, 15.0f));
+    }
+
+    SECTION("rotationX") {
+        auto expected = pt::ApproxMat4(
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, -1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+        auto result = pt::rotationX(pt::pi<float> * 0.5f);
+        REQUIRE(result == expected);
+
+        auto transformed = pt::transformPoint3x4(result, pt::Vec3(0.0f, 1.0f, 0.0f));
+        REQUIRE(transformed == pt::ApproxVec3(0.0f, 0.0f, 1.0f));
+
+        transformed = pt::transformVector3x4(result, pt::Vec3(0.0f, 1.0f, 0.0f));
+        REQUIRE(transformed == pt::ApproxVec3(0.0f, 0.0f, 1.0f));
+    }
+
+    SECTION("rotationY") {
+        auto expected = pt::ApproxMat4(
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            -1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+        auto result = pt::rotationY(pt::pi<float> * 0.5f);
+        REQUIRE(result == expected);
+
+        auto transformed = pt::transformPoint3x4(result, pt::Vec3(1.0f, 0.0f, 0.0f));
+        REQUIRE(transformed == pt::ApproxVec3(0.0f, 0.0f, -1.0f));
+
+        transformed = pt::transformVector3x4(result, pt::Vec3(1.0f, 0.0f, 0.0f));
+        REQUIRE(transformed == pt::ApproxVec3(0.0f, 0.0f, -1.0f));
+    }
+
+    SECTION("rotationZ") {
+        auto expected = pt::ApproxMat4(
+            0.0f, -1.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+        auto result = pt::rotationZ(pt::pi<float> * 0.5f);
+        REQUIRE(result == expected);
+
+        auto transformed = pt::transformPoint3x4(result, pt::Vec3(1.0f, 0.0f, 0.0f));
+        REQUIRE(transformed == pt::ApproxVec3(0.0f, 1.0f, 0.0f));
+
+        transformed = pt::transformVector3x4(result, pt::Vec3(1.0f, 0.0f, 0.0f));
+        REQUIRE(transformed == pt::ApproxVec3(0.0f, 1.0f, 0.0f));
+    }
 }
