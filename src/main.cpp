@@ -9,6 +9,8 @@
 #include "Ray.h"
 #include "ColorUtils.h"
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 #include <json.hpp>
 
 #include <chrono>
@@ -23,7 +25,7 @@ pt::Film parseFilm(const json& root) {
     uint32_t filmWidth, filmHeight;
     if (auto it = root.find("film"); it != root.end()) {
         for (const auto& item : it->items()) {
-            const auto& v = item.value();
+            const json& v = item.value();
             if (item.key() == "size") {
                 if (v.is_array()) {
                     v[0].get_to(filmWidth);
@@ -49,7 +51,7 @@ pt::Camera parseCamera(const json& root, float filmAspect) {
 
     if (auto it = root.find("camera"); it != root.end()) {
         for (const auto& item : it->items()) {
-            const auto& v = item.value();
+            const json& v = item.value();
             if (item.key() == "fovY") {
                 v.get_to(fovY);
             }
@@ -80,7 +82,7 @@ pt::Renderer parseRenderer(const json& root) {
     pt::Renderer renderer;
     if (auto it = root.find("renderer"); it != root.end()) {
         for (const auto& item : it->items()) {
-            const auto& v = item.value();
+            const json& v = item.value();
             if (item.key() == "maxDepth") {
                 renderer.setMaxDepth(v.get<uint32_t>());
             }
@@ -134,7 +136,7 @@ void parseMaterials(const json& root, std::vector<pt::Material>& materials,
         pt::Vec3 emittance(0.0f);
 
         for (const auto& item : materialDesc.items()) {
-            const auto& v = item.value();
+            const json& v = item.value();
             if (item.key() == "name") {
                 materialMap[v.get<std::string>()] = materials.size();
             }
@@ -172,6 +174,102 @@ void parseMaterials(const json& root, std::vector<pt::Material>& materials,
     }
 }
 
+void parseTriangleMesh(const json& root, const pt::Material& material,
+        std::vector<pt::Triangle>& triangles) {
+    bool hasVertices = root.contains("vertices");
+    bool hasIndices = root.contains("indices");
+
+    if (hasVertices && hasIndices) {
+        const json& vertices = root["vertices"];
+        const json& indices = root["indices"];
+        for (size_t i = 0; i < indices.size(); i += 3) {
+            uint32_t i0 = indices[i + 0].get<uint32_t>();
+            uint32_t i1 = indices[i + 1].get<uint32_t>();
+            uint32_t i2 = indices[i + 2].get<uint32_t>();
+            pt::Vec3 p0 = pt::Vec3(
+                vertices[i0 * 3 + 0].get<float>(),
+                vertices[i0 * 3 + 1].get<float>(),
+                vertices[i0 * 3 + 2].get<float>());
+            pt::Vec3 p1 = pt::Vec3(
+                vertices[i1 * 3 + 0].get<float>(),
+                vertices[i1 * 3 + 1].get<float>(),
+                vertices[i1 * 3 + 2].get<float>());
+            pt::Vec3 p2 = pt::Vec3(
+                vertices[i2 * 3 + 0].get<float>(),
+                vertices[i2 * 3 + 1].get<float>(),
+                vertices[i2 * 3 + 2].get<float>());
+            triangles.emplace_back(p0, p1, p2, material);
+        }
+    }
+    else if (hasVertices && !hasIndices) {
+        const json& vertices = root["vertices"];
+        for (size_t i = 0; i < vertices.size(); i += 9) {
+            pt::Vec3 p0 = pt::Vec3(
+                vertices[i + 0].get<float>(),
+                vertices[i + 1].get<float>(),
+                vertices[i + 2].get<float>());
+            pt::Vec3 p1 = pt::Vec3(
+                vertices[i + 3].get<float>(),
+                vertices[i + 4].get<float>(),
+                vertices[i + 5].get<float>());
+            pt::Vec3 p2 = pt::Vec3(
+                vertices[i + 6].get<float>(),
+                vertices[i + 7].get<float>(),
+                vertices[i + 8].get<float>());
+            triangles.emplace_back(p0, p1, p2, material);
+        }
+    }
+    else if (!hasVertices && !hasIndices) {
+        std::string objPath = root["modelPath"].get<std::string>();
+
+        tinyobj::attrib_t attrib;
+        std::vector<tinyobj::shape_t> shapes;
+        std::string errors;
+
+        bool success = tinyobj::LoadObj(&attrib, &shapes, nullptr, &errors, objPath.c_str());
+        if (!errors.empty()) {
+            std::cout << "[WARNING]: " << errors << "\n";
+        }
+        if (!success) {
+            std::cout << "[WARNING]: Skipping invalid obj triangle mesh\n";
+            return;
+        }
+
+        for (size_t shapeIndex = 0; shapeIndex < shapes.size(); shapeIndex++) {
+            size_t indexOffset = 0;
+            size_t numFaces = shapes[shapeIndex].mesh.num_face_vertices.size();
+
+            for (size_t faceIndex = 0; faceIndex < numFaces; faceIndex++) {
+                size_t numVertices = shapes[shapeIndex].mesh.num_face_vertices[faceIndex];
+
+                for (size_t vertexIndex = 0; vertexIndex < numVertices; vertexIndex += 3) {
+                    tinyobj::index_t i0 = shapes[shapeIndex].mesh.indices[indexOffset + vertexIndex + 0];
+                    tinyobj::index_t i1 = shapes[shapeIndex].mesh.indices[indexOffset + vertexIndex + 1];
+                    tinyobj::index_t i2 = shapes[shapeIndex].mesh.indices[indexOffset + vertexIndex + 2];
+
+                    pt::Vec3 p0 = pt::Vec3(
+                        attrib.vertices[i0.vertex_index * 3 + 0],
+                        attrib.vertices[i0.vertex_index * 3 + 1],
+                        attrib.vertices[i0.vertex_index * 3 + 2]);
+                    pt::Vec3 p1 = pt::Vec3(
+                        attrib.vertices[i1.vertex_index * 3 + 0],
+                        attrib.vertices[i1.vertex_index * 3 + 1],
+                        attrib.vertices[i1.vertex_index * 3 + 2]);
+                    pt::Vec3 p2 = pt::Vec3(
+                        attrib.vertices[i2.vertex_index * 3 + 0],
+                        attrib.vertices[i2.vertex_index * 3 + 1],
+                        attrib.vertices[i2.vertex_index * 3 + 2]);
+                    triangles.emplace_back(p0*32.f, p1*32.f, p2*32.f, material);
+                }
+                indexOffset += numVertices;
+            }
+        }
+    }
+    else {
+        std::cout << "[WARNING]: Skipping invalid triangle mesh definition\n";
+    }
+}
+
 void parseShapes(const json& root, const std::vector<pt::Material>& materials,
         const std::unordered_map<std::string, size_t>& materialMap,
         std::vector<pt::Sphere>& spheres, std::vector<pt::Triangle>& triangles) {
@@ -179,13 +277,13 @@ void parseShapes(const json& root, const std::vector<pt::Material>& materials,
         for (const auto& shapeDesc : iterShapes.value()) {
             const pt::Material& material = materials[materialMap.at(shapeDesc["material"])];
             if (shapeDesc["type"] == "sphere") {
-                auto& centerObj = shapeDesc["center"];
+                const json& centerObj = shapeDesc["center"];
                 pt::Vec3 center(centerObj[0].get<float>(), centerObj[1].get<float>(), centerObj[2].get<float>());
                 float radius = shapeDesc["radius"].get<float>();
                 spheres.emplace_back(center, radius, material);
             }
             else if (shapeDesc["type"] == "triangle") {
-                auto& verticesObj = shapeDesc["vertices"];
+                const json& verticesObj = shapeDesc["vertices"];
                 pt::Vec3 vertices[3];
                 vertices[0] = pt::Vec3(verticesObj[0].get<float>(), verticesObj[1].get<float>(), verticesObj[2].get<float>());
                 vertices[1] = pt::Vec3(verticesObj[3].get<float>(), verticesObj[4].get<float>(), verticesObj[5].get<float>());
@@ -193,26 +291,7 @@ void parseShapes(const json& root, const std::vector<pt::Material>& materials,
                 triangles.emplace_back(vertices[0], vertices[1], vertices[2], material);
             }
             else if (shapeDesc["type"] == "triangleMesh") {
-                auto& verticesObj = shapeDesc["vertices"];
-                auto& indicesObj = shapeDesc["indices"];
-                for (size_t i = 0; i < indicesObj.size(); i += 3) {
-                    uint32_t i0 = indicesObj[i + 0].get<uint32_t>();
-                    uint32_t i1 = indicesObj[i + 1].get<uint32_t>();
-                    uint32_t i2 = indicesObj[i + 2].get<uint32_t>();
-                    pt::Vec3 p0 = pt::Vec3(
-                        verticesObj[i0 * 3 + 0].get<float>(),
-                        verticesObj[i0 * 3 + 1].get<float>(),
-                        verticesObj[i0 * 3 + 2].get<float>());
-                    pt::Vec3 p1 = pt::Vec3(
-                        verticesObj[i1 * 3 + 0].get<float>(),
-                        verticesObj[i1 * 3 + 1].get<float>(),
-                        verticesObj[i1 * 3 + 2].get<float>());
-                    pt::Vec3 p2 = pt::Vec3(
-                        verticesObj[i2 * 3 + 0].get<float>(),
-                        verticesObj[i2 * 3 + 1].get<float>(),
-                        verticesObj[i2 * 3 + 2].get<float>());
-                    triangles.emplace_back(p0, p1, p2, material);
-                }
+                parseTriangleMesh(shapeDesc, material, triangles);
             }
         }
     }

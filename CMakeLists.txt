@@ -52,6 +52,10 @@ add_library(json INTERFACE)
 target_include_directories(json INTERFACE ${CMAKE_SOURCE_DIR}/extern/json/include)
 target_link_libraries(PathTracer PRIVATE json)
 
+add_library(tinyobjloader INTERFACE)
+target_include_directories(tinyobjloader INTERFACE ${CMAKE_SOURCE_DIR}/extern/tinyobjloader/include)
+target_link_libraries(PathTracer PRIVATE tinyobjloader)
+
 # Unit tests
 enable_testing()
 add_library(Catch2 INTERFACE)
