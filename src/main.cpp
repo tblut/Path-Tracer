@@ -175,7 +175,7 @@ void parseMaterials(const json& root, std::vector<pt::Material>& materials,
 }
 
 void parseTriangleMesh(const json& root, const pt::Material& material,
-        std::vector<pt::Triangle>& triangles) {
+        const pt::Mat4& transform, std::vector<pt::Triangle>& triangles) {
     bool hasVertices = root.contains("vertices");
     bool hasIndices = root.contains("indices");
 
@@ -198,6 +198,11 @@ void parseTriangleMesh(const json& root, const pt::Material& material,
                 vertices[i2 * 3 + 0].get<float>(),
                 vertices[i2 * 3 + 1].get<float>(),
                 vertices[i2 * 3 + 2].get<float>());
+
+            p0 = pt::transformPoint3x4(transform, p0);
+            p1 = pt::transformPoint3x4(transform, p1);
+            p2 = pt::transformPoint3x4(transform, p2);
+
             triangles.emplace_back(p0, p1, p2, material);
         }
     }
@@ -216,6 +221,11 @@ void parseTriangleMesh(const json& root, const pt::Material& material,
                 vertices[i + 6].get<float>(),
                 vertices[i + 7].get<float>(),
                 vertices[i + 8].get<float>());
+
+            p0 = pt::transformPoint3x4(transform, p0);
+            p1 = pt::transformPoint3x4(transform, p1);
+            p2 = pt::transformPoint3x4(transform, p2);
+
             triangles.emplace_back(p0, p1, p2, material);
         }
     }
@@ -247,6 +257,7 @@ void parseTriangleMesh(const json& root, const pt::Material& material,
                     tinyobj::index_t i1 = shapes[shapeIndex].mesh.indices[indexOffset + vertexIndex + 1];
                     tinyobj::index_t i2 = shapes[shapeIndex].mesh.indices[indexOffset + vertexIndex + 2];
 
+                    // TODO: Add normals to triangles
                     pt::Vec3 p0 = pt::Vec3(
                         attrib.vertices[i0.vertex_index * 3 + 0],
                         attrib.vertices[i0.vertex_index * 3 + 1],
@@ -259,8 +270,14 @@ void parseTriangleMesh(const json& root, const pt::Material& material,
                         attrib.vertices[i2.vertex_index * 3 + 0],
                         attrib.vertices[i2.vertex_index * 3 + 1],
                         attrib.vertices[i2.vertex_index * 3 + 2]);
-                    triangles.emplace_back(p0*32.f, p1*32.f, p2*32.f, material);
+
+                    p0 = pt::transformPoint3x4(transform, p0);
+                    p1 = pt::transformPoint3x4(transform, p1);
+                    p2 = pt::transformPoint3x4(transform, p2);
+
+                    triangles.emplace_back(p0, p1, p2, material);
                 }
+
                 indexOffset += numVertices;
             }
         }
@@ -276,10 +293,46 @@ void parseShapes(const json& root, const std::vector<pt::Material>& materials,
     if (auto iterShapes = root.find("shapes"); iterShapes != root.end()) {
         for (const auto& shapeDesc : iterShapes.value()) {
             const pt::Material& material = materials[materialMap.at(shapeDesc["material"])];
+
+            pt::Mat4 transform(1.0f);
+            if (auto it = shapeDesc.find("transform"); it != shapeDesc.end()) {
+                const json& v = it.value();
+                transform = pt::Mat4(
+                    v[0].get<float>(), v[1].get<float>(), v[2].get<float>(), v[3].get<float>(),
+                    v[4].get<float>(), v[5].get<float>(), v[6].get<float>(), v[7].get<float>(),
+                    v[8].get<float>(), v[9].get<float>(), v[10].get<float>(), v[11].get<float>(),
+                    v[12].get<float>(), v[13].get<float>(), v[14].get<float>(), v[15].get<float>());
+            }
+            else {
+                if (auto it = shapeDesc.find("translation"); it != shapeDesc.end()) {
+                    const json& v = it.value();
+                    transform *= pt::translation(pt::Vec3(v[0].get<float>(), v[1].get<float>(), v[2].get<float>()));
+                }
+                if (auto it = shapeDesc.find("rotation"); it != shapeDesc.end()) {
+                    const json& v = it.value();
+                    transform *= pt::rotationZ(pt::radians(v[2].get<float>()));
+                    transform *= pt::rotationY(pt::radians(v[1].get<float>()));
+                    transform *= pt::rotationX(pt::radians(v[0].get<float>()));
+                }
+                if (auto it = shapeDesc.find("scale"); it != shapeDesc.end()) {
+                    const json& v = it.value();
+                    if (v.is_array()) {
+                        transform *= pt::scaling(pt::Vec3(v[0].get<float>(), v[1].get<float>(), v[2].get<float>()));
+                    }
+                    else {
+                        transform *= pt::scaling(pt::Vec3(v.get<float>()));
+                    }
+                }
+            }
+
             if (shapeDesc["type"] == "sphere") {
                 const json& centerObj = shapeDesc["center"];
                 pt::Vec3 center(centerObj[0].get<float>(), centerObj[1].get<float>(), centerObj[2].get<float>());
+                center = pt::transformPoint3x4(transform, center);
+
                 float radius = shapeDesc["radius"].get<float>();
+                radius = pt::maxComponent(pt::transformVector3x4(transform, pt::Vec3(radius)));
+
                 spheres.emplace_back(center, radius, material);
             }
             else if (shapeDesc["type"] == "triangle") {
@@ -288,10 +341,15 @@ void parseShapes(const json& root, const std::vector<pt::Material>& materials,
                 vertices[0] = pt::Vec3(verticesObj[0].get<float>(), verticesObj[1].get<float>(), verticesObj[2].get<float>());
                 vertices[1] = pt::Vec3(verticesObj[3].get<float>(), verticesObj[4].get<float>(), verticesObj[5].get<float>());
                 vertices[2] = pt::Vec3(verticesObj[6].get<float>(), verticesObj[7].get<float>(), verticesObj[8].get<float>());
+
+                vertices[0] = pt::transformPoint3x4(transform, vertices[0]);
+                vertices[1] = pt::transformPoint3x4(transform, vertices[1]);
+                vertices[2] = pt::transformPoint3x4(transform, vertices[2]);
+
                 triangles.emplace_back(vertices[0], vertices[1], vertices[2], material);
             }
             else if (shapeDesc["type"] == "triangleMesh") {
-                parseTriangleMesh(shapeDesc, material, triangles);
+                parseTriangleMesh(shapeDesc, material, transform, triangles);
             }
         }
     }
