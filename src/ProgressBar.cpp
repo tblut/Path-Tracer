@@ -40,9 +40,6 @@ void ProgressBar::updateThreadMain() const {
 
         float percentDone = workDone_ / static_cast<float>(totalWork_);
         float estTimeLeft = elapsedSec / percentDone - elapsedSec;
-        if (!std::isfinite(estTimeLeft)) {
-            estTimeLeft = 0.0f;
-        }
 
         std::ostringstream message;
         message << title_ << " [";
@@ -60,8 +57,14 @@ void ProgressBar::updateThreadMain() const {
         }
         message << "] "
             << "Elapsed: " << static_cast<int>(elapsedSec) << 's'
-            << " / ETA: " << static_cast<int>(estTimeLeft) << 's'
-            << "          \r"; // Some extra spaces to avoid not clearing parts of the old message
+            << " / ETA: ";
+        if (std::isfinite(estTimeLeft)) {
+            message << static_cast<int>(estTimeLeft) << 's';
+        }
+        else {
+            message << '?';
+        }
+        message << "               \r"; // Some extra spaces to avoid not clearing parts of the old message
 
         std::cout << message.str();
         std::cout.flush();
