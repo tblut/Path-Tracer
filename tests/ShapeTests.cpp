@@ -2,9 +2,47 @@
 #include <catch2/catch.hpp>
 
 #include "TestHelpers.h"
+#include "Bounds3.h"
 #include "Sphere.h"
 #include "Triangle.h"
 #include "RandomSeries.h"
+
+TEST_CASE("Bounds3") {
+    pt::Bounds3 bounds(pt::Vec3(-1.0f), pt::Vec3(1.0f));
+
+    SECTION("getCenter") {
+        REQUIRE(bounds.getCenter() == pt::ApproxVec3(0.0f, 0.0f, 0.0f));
+    }
+
+    SECTION("getExtents") {
+        REQUIRE(bounds.getExtents() == pt::ApproxVec3(1.0f, 1.0f, 1.0f));
+    }
+
+    SECTION("Ray Outside Hit") {
+        pt::Vec3 rayOrigin(0.0f, 0.0f, -2.0f);
+        pt::Vec3 rayDirection = pt::normalize(bounds.getCenter() - rayOrigin);
+        REQUIRE(pt::testRayBoundsIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
+    }
+
+    SECTION("Ray Inside Hit") {
+        pt::Vec3 rayOrigin(0.0f, 0.0f, -0.5f);
+        pt::Vec3 rayDirection = pt::normalize(bounds.getCenter() - rayOrigin);
+        REQUIRE(pt::testRayBoundsIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
+    }
+
+    SECTION("Ray Infront Miss") {
+        pt::Vec3 rayOrigin(0.0f, -2.0f, -2.0f);
+        pt::Vec3 rayDirection(0.0f, 0.0f, -1.0f);
+        REQUIRE_FALSE(pt::testRayBoundsIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
+    }
+
+    SECTION("Ray Behind Miss") {
+        pt::Vec3 rayOrigin(0.0f, -2.0f, 2.0f);
+        pt::Vec3 rayDirection(0.0f, 0.0f, -1.0f);
+        REQUIRE_FALSE(pt::testRayBoundsIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
+    }
+}
+
 
 TEST_CASE("Sphere") {
     pt::Material dummyMat(pt::Vec3(), 0.0f, 0.0f);

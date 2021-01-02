@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4723) // Potential division by zero
+#endif
+
 #include "Vector3.h"
 
 namespace pt {
@@ -11,6 +15,7 @@ struct Ray {
     constexpr Ray(const Vec3& origin_, const Vec3& direction_)
         : origin(origin_)
         , direction(direction_)
+        , invDirection(Vec3(1.0f) / direction_)
     {
     }
 
@@ -20,6 +25,7 @@ struct Ray {
 
     Vec3 origin;
     Vec3 direction;
+    Vec3 invDirection;
 };
 
 struct RayHit {
@@ -39,3 +45,7 @@ struct RayHit {
 constexpr RayHit rayMiss = RayHit(-inf<float>, Vec3(), nullptr);
 
 } // namespace pt
+
+#ifdef _MSC_VER
+#pragma warning(default: 4723)
+#endif
