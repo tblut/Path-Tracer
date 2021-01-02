@@ -6,9 +6,9 @@
 
 namespace pt {
 
-struct Bounds3 {
-    Bounds3() = default;
-    Bounds3(const Vec3& min_, const Vec3& max_)
+struct BoundingBox {
+    BoundingBox() = default;
+    BoundingBox(const Vec3& min_, const Vec3& max_)
         : min(min_)
         , max(max_)
     {
@@ -22,16 +22,16 @@ struct Bounds3 {
 };
 
 // See: https://tavianator.com/2015/ray_box_nan.html
-bool testRayBoundsIntersection(const Ray& ray, const Bounds3& bounds) {
-    float t1 = (bounds.min[0] - ray.origin[0]) * ray.invDirection[0];
-    float t2 = (bounds.max[0] - ray.origin[0]) * ray.invDirection[0];
+inline bool testIntersection(const Ray& ray, const BoundingBox& box) {
+    float t1 = (box.min[0] - ray.origin[0]) * ray.invDirection[0];
+    float t2 = (box.max[0] - ray.origin[0]) * ray.invDirection[0];
 
     float tmin = min(t1, t2);
     float tmax = max(t1, t2);
 
     for (int i = 1; i < 3; i++) {
-        t1 = (bounds.min[i] - ray.origin[i]) * ray.invDirection[i];
-        t2 = (bounds.max[i] - ray.origin[i]) * ray.invDirection[i];
+        t1 = (box.min[i] - ray.origin[i]) * ray.invDirection[i];
+        t2 = (box.max[i] - ray.origin[i]) * ray.invDirection[i];
 
         tmin = max(tmin, min(t1, t2));
         tmax = min(tmax, max(t1, t2));

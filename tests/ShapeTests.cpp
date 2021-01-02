@@ -2,13 +2,16 @@
 #include <catch2/catch.hpp>
 
 #include "TestHelpers.h"
-#include "Bounds3.h"
+#include "BoundingBox.h"
 #include "Sphere.h"
 #include "Triangle.h"
 #include "RandomSeries.h"
+#include "BSDF.h"
 
-TEST_CASE("Bounds3") {
-    pt::Bounds3 bounds(pt::Vec3(-1.0f), pt::Vec3(1.0f));
+#include <vector>
+
+TEST_CASE("BoundingBox") {
+    pt::BoundingBox bounds(pt::Vec3(-1.0f), pt::Vec3(1.0f));
 
     SECTION("getCenter") {
         REQUIRE(bounds.getCenter() == pt::ApproxVec3(0.0f, 0.0f, 0.0f));
@@ -21,25 +24,25 @@ TEST_CASE("Bounds3") {
     SECTION("Ray Outside Hit") {
         pt::Vec3 rayOrigin(0.0f, 0.0f, -2.0f);
         pt::Vec3 rayDirection = pt::normalize(bounds.getCenter() - rayOrigin);
-        REQUIRE(pt::testRayBoundsIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
+        REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
     }
 
     SECTION("Ray Inside Hit") {
         pt::Vec3 rayOrigin(0.0f, 0.0f, -0.5f);
         pt::Vec3 rayDirection = pt::normalize(bounds.getCenter() - rayOrigin);
-        REQUIRE(pt::testRayBoundsIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
+        REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
     }
 
     SECTION("Ray Infront Miss") {
         pt::Vec3 rayOrigin(0.0f, -2.0f, -2.0f);
         pt::Vec3 rayDirection(0.0f, 0.0f, -1.0f);
-        REQUIRE_FALSE(pt::testRayBoundsIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
+        REQUIRE_FALSE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
     }
 
     SECTION("Ray Behind Miss") {
         pt::Vec3 rayOrigin(0.0f, -2.0f, 2.0f);
         pt::Vec3 rayDirection(0.0f, 0.0f, -1.0f);
-        REQUIRE_FALSE(pt::testRayBoundsIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
+        REQUIRE_FALSE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
     }
 }
 
@@ -143,5 +146,45 @@ TEST_CASE("Triangle") {
     SECTION("Normal Computation") {
         pt::Vec3 normal = triangle.normalAt(pt::Vec3(0.0f));
         REQUIRE(normal == pt::ApproxVec3(0.0f, 0.0f, 1.0f));
+    }
+}
+
+
+TEST_CASE("Triangle Watertight") {
+    constexpr float radius = 100.0f;
+    constexpr size_t numSlices = 128;
+
+    std::vector<pt::Vec3> vertices;
+    vertices.reserve(numSlices + 1);
+    vertices.emplace_back(0.0f, 0.0f, 0.0f);
+    for (size_t slice = 0; slice < numSlices; slice++) {
+        float phi = 2.0f * pt::pi<float> / numSlices * slice;
+        vertices.emplace_back(std::cos(phi) * radius, std::sin(phi) * radius, 0.0f);
+    }
+
+    pt::Material dummyMat(pt::Vec3(), 0.0f, 0.0f);
+    std::vector<pt::Triangle> triangles;
+    for (size_t slice = 0; slice < numSlices; slice++) {
+        pt::Vec3 p0 = vertices[0];
+        pt::Vec3 p1 = vertices[1 + slice];
+        pt::Vec3 p2 = vertices[1 + (slice + 1) % numSlices];
+        triangles.emplace_back(p0, p1, p2, dummyMat);
+    }
+
+    pt::RandomSeries rng;
+    for (size_t i = 0; i < 1000000; i++) {
+        pt::Vec3 rayOrigin = pt::sampleCosineHemisphere(rng.uniformFloat(), rng.uniformFloat());
+        rayOrigin *= 1.0f + rng.uniformFloat() * radius * 2.0f;
+
+        pt::Vec3 vertex = vertices[static_cast<size_t>(rng.uniformFloat() * vertices.size())];
+        pt::Ray ray(rayOrigin, pt::normalize(vertex - rayOrigin));
+
+        size_t numIntersections = 0;
+        for (const auto& triangle : triangles) {
+            if (triangle.intersect(ray) >= 0.0f) {
+                numIntersections++;
+            }
+        }
+        REQUIRE(numIntersections >= 1);
     }
 }
