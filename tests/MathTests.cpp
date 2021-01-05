@@ -49,6 +49,33 @@ TEST_CASE("maxComponent") {
     CHECK(pt::maxComponent(pt::Vec4(4.0f, 2.0f, 3.0f, 1.0f)) == pt::Approx(4.0f));
 }
 
+TEST_CASE("minDimension") {
+    CHECK(pt::minDimension(pt::Vec2(1.0f, 2.0f)) == 0);
+    CHECK(pt::minDimension(pt::Vec2(2.0f, 1.0f)) == 1);
+
+    CHECK(pt::minDimension(pt::Vec3(1.0f, 2.0f, 3.0f)) == 0);
+    CHECK(pt::minDimension(pt::Vec3(3.0f, 1.0f, 2.0f)) == 1);
+    CHECK(pt::minDimension(pt::Vec3(2.0f, 3.0f, 1.0f)) == 2);
+
+    CHECK(pt::minDimension(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == 0);
+    CHECK(pt::minDimension(pt::Vec4(4.0f, 1.0f, 2.0f, 3.0f)) == 1);
+    CHECK(pt::minDimension(pt::Vec4(3.0f, 4.0f, 1.0f, 2.0f)) == 2);
+    CHECK(pt::minDimension(pt::Vec4(2.0f, 3.0f, 4.0f, 1.0f)) == 3);
+}
+TEST_CASE("maxDimension") {
+    CHECK(pt::maxDimension(pt::Vec2(1.0f, 2.0f)) == 1);
+    CHECK(pt::maxDimension(pt::Vec2(2.0f, 1.0f)) == 0);
+
+    CHECK(pt::maxDimension(pt::Vec3(1.0f, 2.0f, 3.0f)) == 2);
+    CHECK(pt::maxDimension(pt::Vec3(3.0f, 1.0f, 2.0f)) == 0);
+    CHECK(pt::maxDimension(pt::Vec3(1.0f, 3.0f, 1.0f)) == 1);
+
+    CHECK(pt::maxDimension(pt::Vec4(1.0f, 2.0f, 3.0f, 4.0f)) == 3);
+    CHECK(pt::maxDimension(pt::Vec4(4.0f, 1.0f, 2.0f, 3.0f)) == 0);
+    CHECK(pt::maxDimension(pt::Vec4(3.0f, 4.0f, 1.0f, 2.0f)) == 1);
+    CHECK(pt::maxDimension(pt::Vec4(2.0f, 3.0f, 4.0f, 1.0f)) == 2);
+}
+
 TEST_CASE("clamp") {
     CHECK(pt::clamp(-1.0f, 1.5f, 1.75f) == pt::Approx(1.5f));
     CHECK(pt::clamp(1.6f, 1.5f, 1.75f) == pt::Approx(1.6f));

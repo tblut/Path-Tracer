@@ -106,10 +106,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
 
         float cosThetaI = abs(cosTheta(wi));
         if (cosThetaI > 0.0f && lightPdf > 0.0f) {
-            Ray lightRay;
-            lightRay.origin = intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f;
-            lightRay.direction = lightDir;
-
+            Ray lightRay(intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f, lightDir);
             RayHit lightHit = scene.intersect(lightRay);
             if (lightHit.shape == light && lightHit.shape != hit.shape) {
                 float bsdfPdf = material->pdf(wi, wo);
@@ -132,10 +129,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
         Vec3 bsdf = material->evaluate(wi, wo);
 
         // MIS BSDF sampling
-        Ray lightRay;
-        lightRay.origin = intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f;
-        lightRay.direction = basis.localToWorld(wi);
-
+        Ray lightRay(intersectionPoint + sign(cosTheta(wi)) * hit.normal * 0.001f, basis.localToWorld(wi));
         RayHit lightHit = scene.intersect(lightRay);
         if (lightHit.shape == light && lightHit.shape != hit.shape) {
             lightPdf = light->pdf(intersectionPoint, lightRay.direction);

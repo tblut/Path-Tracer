@@ -34,6 +34,11 @@ Vec3 Sphere::normalAt(const Vec3& p) const {
     return normalize(p - center_);
 }
 
+BoundingBox Sphere::getWorldBounds() const {
+    Vec3 radiusVec(radius_);
+    return BoundingBox(center_ - radiusVec, center_ + radiusVec);
+}
+
 Vec3 Sphere::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) const {
     Vec3 w = center_ - p;
     float distSq = lengthSq(w);

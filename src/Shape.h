@@ -1,18 +1,23 @@
 #pragma once
 
-#include "Ray.h"
+#include "BoundingBox.h"
 #include "Material.h"
 
 namespace pt {
 
-class Material;
+struct Ray;
 
 class Shape {
 public:
-    Shape(const Material& material_) : material(&material_) { }
+    Shape(const Material& material_)
+        : material(&material_)
+    {
+    }
     virtual ~Shape() = default;
+
     virtual float intersect(const Ray& ray) const = 0;
     virtual Vec3 normalAt(const Vec3& p) const = 0;
+    virtual BoundingBox getWorldBounds() const = 0;
 
     // Returns a uniformly sampled direction in world space from the point p to this shape
     virtual Vec3 sampleDirection(const Vec3& p, float u1, float u2, float* pdf = nullptr) const = 0;

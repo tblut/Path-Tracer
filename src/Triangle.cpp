@@ -65,6 +65,7 @@ Triangle::Triangle(const Vec3& p0, const Vec3& p1, const Vec3& p2, const Materia
 }
 
 // See: Fast Minimum Storage Ray Triangle Intersection (1997), Möller and Trumbore
+// TODO: Use the method from Woop et al. (2013) instead to get watertight triangle intersection
 float Triangle::intersect(const Ray& ray) const {
     constexpr float eps = 1e-6f;
 
@@ -96,6 +97,10 @@ float Triangle::intersect(const Ray& ray) const {
 
 Vec3 Triangle::normalAt(const Vec3& p) const {
     return normal_;
+}
+
+BoundingBox Triangle::getWorldBounds() const {
+    return BoundingBox(min(p0_, min(p1_, p2_)), max(p0_, max(p1_, p2_)));
 }
 
 Vec3 Triangle::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) const {

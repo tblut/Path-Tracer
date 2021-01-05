@@ -11,7 +11,7 @@
     },
     "renderer": {
         "maxDepth": 10,
-        "samplesPerPixel": 2048,
+        "samplesPerPixel": 64,
         "minRRDepth": 3,
         "backgroundColor": [0, 0, 0],
         "tileSize": [64, 64]
@@ -49,7 +49,7 @@
                 "name": "light",
                 "baseColor": [1, 1, 1],
                 "roughness": 1.0,
-                "emittance": 12.0
+                "emittance": [18.387, 10.9873, 2.75357]
             }
         ],
         "shapes": [
@@ -91,7 +91,7 @@
                 "material": "white"
             },
 
-            {
+            /*{
                 "type": "sphere",
                 "center": [-0.75, -1.2, -0.75],
                 "radius": 0.75,
@@ -102,6 +102,13 @@
                 "center": [0.8, -1.25, 0.5],
                 "radius": 0.75,
                 "material": "glass"
+            }*/
+            {
+                "type": "triangleMesh",
+                "modelPath": "C:/Users/batze/Dev/Path-Tracer/scenes/bunny.obj",
+                "material": "metal",
+                "scale": 1.5,
+                "translation": [0, -2, 0]
             }
         ]
     }

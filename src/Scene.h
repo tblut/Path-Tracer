@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Ray.h"
+#include "BVH.h"
 
 #include <vector>
+#include <memory>
 
 namespace pt {
 
@@ -23,6 +25,7 @@ public:
 private:
     std::vector<const Shape*> shapes_;
     std::vector<const Shape*> lights_;
+    std::unique_ptr<BVH> bvh_;
 };
 
 } // namespace pt

@@ -65,6 +65,20 @@ constexpr T maxComponent(const Vector4<T>& v) {
 }
 
 template <typename T>
+constexpr unsigned int minDimension(const Vector4<T>& v) {
+    return v.x < v.y
+        ? (v.x < v.z ? (v.x < v.w ? 0 : 3) : (v.z < v.w ? 2 : 3))
+        : (v.y < v.z ? (v.y < v.w ? 1 : 3) : (v.z < v.w ? 2 : 3));
+}
+
+template <typename T>
+constexpr unsigned int maxDimension(const Vector4<T>& v) {
+    return v.x > v.y
+        ? (v.x > v.z ? (v.x > v.w ? 0 : 3) : (v.z > v.w ? 2 : 3))
+        : (v.y > v.z ? (v.y > v.w ? 1 : 3) : (v.z > v.w ? 2 : 3));
+}
+
+template <typename T>
 constexpr Vector4<T> clamp(const Vector4<T>& v, T minValue, T maxValue) {
     return {
         max(min(v.x, maxValue), minValue),
