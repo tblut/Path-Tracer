@@ -17,6 +17,9 @@ public:
     virtual Vec3 sampleDirection(const Vec3& p, float u1, float u2, float* pdf = nullptr) const override;
     virtual float pdf(const Vec3& p, const Vec3& wi) const override;
 
+    const Vec3& getVertex(unsigned int index) const { return vertices_[index]; }
+    const Vec3& getNormal(unsigned int index) const { return normals_[index]; }
+
 private:
     Vec3 vertices_[3];
     Vec3 normals_[3];

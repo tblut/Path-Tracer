@@ -75,34 +75,33 @@ TEST_CASE("Sphere") {
         pt::Vec3 rayOrigin(1.0f, 1.0f, -2.0f);
         pt::Vec3 rayDirection = pt::normalize(sphereCenter - rayOrigin);
         float distance = pt::length(sphereCenter - rayOrigin) - sphereRadius;
-        float t = sphere.intersect(pt::Ray(rayOrigin, rayDirection));
+        float t = sphere.intersect(pt::Ray(rayOrigin, rayDirection)).t;
         REQUIRE(t == pt::Approx(distance));
     }
 
     SECTION("Ray Inside Hit") {
         pt::Vec3 rayOrigin = sphereCenter;
         pt::Vec3 rayDirection(0.0f, 0.0f, 1.0f);
-        float t = sphere.intersect(pt::Ray(rayOrigin, rayDirection));
+        float t = sphere.intersect(pt::Ray(rayOrigin, rayDirection)).t;
         REQUIRE(t == pt::Approx(sphereRadius));
     }
 
     SECTION("Ray Miss") {
         pt::Vec3 rayOrigin(-3.0f, 1.0f, -2.0f);
         pt::Vec3 rayDirection(0.0f, 0.0f, 1.0f);
-        float t = sphere.intersect(pt::Ray(rayOrigin, rayDirection));
-        REQUIRE(t < 0.0f);
+        REQUIRE_FALSE(sphere.intersect(pt::Ray(rayOrigin, rayDirection)));
     }
 
     SECTION("Ray Behind Sphere Miss") {
         pt::Vec3 rayOrigin(1.0f, 1.0f, 4.0f);
         pt::Vec3 rayDirection(0.0f, 0.0f, 1.0f);
-        float t = sphere.intersect(pt::Ray(rayOrigin, rayDirection));
-        REQUIRE(t < 0.0f);
+        REQUIRE_FALSE(sphere.intersect(pt::Ray(rayOrigin, rayDirection)));
     }
 
     SECTION("Normal Computation") {
-        pt::Vec3 normal = sphere.normalAt(sphereCenter + pt::Vec3(sphereRadius, 0.0f, 0.0f));
-        REQUIRE(normal == pt::ApproxVec3(1.0f, 0.0f, 0.0f));
+        pt::Ray ray(sphereCenter + pt::Vec3(4.0f, 0.0f, 0.0f), pt::Vec3(-1.0f, 0.0f, 0.0f));
+        pt::RayHit hit = sphere.intersect(ray);
+        REQUIRE(hit.normal == pt::ApproxVec3(1.0f, 0.0f, 0.0f));
     }
 
     SECTION("World Bounds") {
@@ -122,7 +121,7 @@ TEST_CASE("Sphere") {
             REQUIRE(pdf >= 0.0f);
 
             float distance = pt::length(sphereCenter - p) - sphereRadius;
-            float t = sphere.intersect(pt::Ray(p, dir));
+            float t = sphere.intersect(pt::Ray(p, dir)).t;
             REQUIRE(t >= distance - pt::testEps<float>);
         }
     }
@@ -135,13 +134,14 @@ TEST_CASE("Triangle") {
         pt::Vec3(-1.0f, -1.0f, 0.0f),
         pt::Vec3(1.0f, -1.0f, 0.0f),
         pt::Vec3(0.0f, 1.0f, 0.0f),
-        dummyMat);
+        dummyMat
+    );
 
     SECTION("Ray Front Hit") {
         pt::Vec3 rayOrigin(0.0f, 0.0f, 2.0f);
         pt::Vec3 rayDirection(0.0f, 0.0f, -1.0f);
         float distance = pt::length(rayOrigin);
-        float t = triangle.intersect(pt::Ray(rayOrigin, rayDirection));
+        float t = triangle.intersect(pt::Ray(rayOrigin, rayDirection)).t;
         REQUIRE(t == pt::Approx(distance));
     }
 
@@ -149,27 +149,48 @@ TEST_CASE("Triangle") {
         pt::Vec3 rayOrigin(0.0f, 0.0f, -2.0f);
         pt::Vec3 rayDirection(0.0f, 0.0f, 1.0f);
         float distance = pt::length(rayOrigin);
-        float t = triangle.intersect(pt::Ray(rayOrigin, rayDirection));
+        float t = triangle.intersect(pt::Ray(rayOrigin, rayDirection)).t;
         REQUIRE(t == pt::Approx(distance));
     }
 
     SECTION("Ray Miss") {
         pt::Vec3 rayOrigin(1.0f, 1.0f, 2.0f);
         pt::Vec3 rayDirection(0.0f, 0.0f, -1.0f);
-        float t = triangle.intersect(pt::Ray(rayOrigin, rayDirection));
-        REQUIRE(t < 0.0f);
+        REQUIRE_FALSE(triangle.intersect(pt::Ray(rayOrigin, rayDirection)));
     }
 
     SECTION("Ray Behind Miss") {
         pt::Vec3 rayOrigin(1.0f, 1.0f, -2.0f);
         pt::Vec3 rayDirection(0.0f, 0.0f, -1.0f);
-        float t = triangle.intersect(pt::Ray(rayOrigin, rayDirection));
-        REQUIRE(t < 0.0f);
+        REQUIRE_FALSE(triangle.intersect(pt::Ray(rayOrigin, rayDirection)));
     }
 
-    SECTION("Normal Computation") {
-        pt::Vec3 normal = triangle.normalAt(pt::Vec3(0.0f));
-        REQUIRE(normal == pt::ApproxVec3(0.0f, 0.0f, 1.0f));
+    SECTION("Normal Computation Flat") {
+        pt::Ray ray(pt::Vec3(0.0f, 0.0f, 3.0f), pt::Vec3(0.0f, 0.0f, -1.0f));
+        pt::RayHit hit = triangle.intersect(ray);
+        REQUIRE(hit.normal == pt::ApproxVec3(0.0f, 0.0f, 1.0f));
+    }
+
+    SECTION("Normal Computation Smooth") {
+        pt::Triangle smoothTriangle(
+            pt::Vec3(-1.0f, -1.0f, 0.0f),
+            pt::Vec3(1.0f, -1.0f, 0.0f),
+            pt::Vec3(0.0f, 1.0f, 0.0f),
+            pt::normalize(pt::Vec3(-1.0f, -1.0f, 1.0f)),
+            pt::normalize(pt::Vec3(1.0f, -1.0f, 1.0f)),
+            pt::normalize(pt::Vec3(0.0f, 1.0f, 1.0f)),
+            dummyMat
+        );
+
+        pt::Vec3 center = (smoothTriangle.getVertex(0) + smoothTriangle.getVertex(1)
+            + smoothTriangle.getVertex(2)) / 3.0f;
+        pt::Vec3 origin(0.0f, 0.0f, 3.0f);
+        pt::Ray ray(origin, pt::normalize(center - origin));
+        pt::RayHit hit = smoothTriangle.intersect(ray);
+
+        pt::Vec3 expectedNormal = pt::normalize(smoothTriangle.getNormal(0)
+            + smoothTriangle.getNormal(1) + smoothTriangle.getNormal(2));
+        REQUIRE(hit.normal == pt::ApproxVec3(expectedNormal.x, expectedNormal.y, expectedNormal.z));
     }
 
     SECTION("World Bounds") {
@@ -270,8 +291,8 @@ TEST_CASE("Bounding Volume Hierarchy") {
                 pt::Vec3 origin(target.x, target.y, 5.0f);
                 pt::Ray ray(origin, pt::normalize(target - origin));
 
-                auto [t, hitShape] = bvh.intersect(ray);
-                REQUIRE(hitShape == &sphere);
+                pt::RayHit hit = bvh.intersect(ray);
+                REQUIRE(hit.shape == &sphere);
             }
         }
     }
@@ -284,8 +305,8 @@ TEST_CASE("Bounding Volume Hierarchy") {
                 pt::Vec3 origin(22.0f, target.y, target.z);
                 pt::Ray ray(origin, pt::normalize(target - origin));
 
-                auto [t, hitShape] = bvh.intersect(ray);
-                REQUIRE(hitShape == &spheres.back());
+                pt::RayHit hit = bvh.intersect(ray);
+                REQUIRE(hit.shape == &spheres.back());
             }
         }
     }
