@@ -34,7 +34,7 @@ private:
     void parseShapes(const nlohmann::json& node, const std::vector<pt::Material>& materials,
         std::vector<pt::Sphere>& spheres, std::vector<pt::Triangle>& triangles);
     void parseTriangleMesh(const nlohmann::json& node, const Material& material,
-        const Mat4& transform, std::vector<pt::Triangle>& triangles);
+        const Mat4& transform, const Mat4& normalTransform, std::vector<pt::Triangle>& triangles);
 
     std::filesystem::path sceneFilePath_;
     nlohmann::json root_;

@@ -193,35 +193,35 @@ void SceneFileParser::parseShapes(const json& node, const std::vector<Material>&
             const Material& material = materials[materialMap_.at(shapeDesc["material"])];
 
             Mat4 transform(1.0f);
-            if (auto it = shapeDesc.find("transform"); it != shapeDesc.end()) {
+            Mat4 normalTransform(1.0f);
+            if (auto it = shapeDesc.find("translation"); it != shapeDesc.end()) {
                 const json& v = it.value();
-                transform = Mat4(
-                    v[0].get<float>(), v[1].get<float>(), v[2].get<float>(), v[3].get<float>(),
-                    v[4].get<float>(), v[5].get<float>(), v[6].get<float>(), v[7].get<float>(),
-                    v[8].get<float>(), v[9].get<float>(), v[10].get<float>(), v[11].get<float>(),
-                    v[12].get<float>(), v[13].get<float>(), v[14].get<float>(), v[15].get<float>());
+                Vec3 translationVec(v[0].get<float>(), v[1].get<float>(), v[2].get<float>());
+                transform *= translation(translationVec);
+                normalTransform *= translation(-translationVec);
             }
-            else {
-                if (auto it = shapeDesc.find("translation"); it != shapeDesc.end()) {
-                    const json& v = it.value();
-                    transform *= translation(Vec3(v[0].get<float>(), v[1].get<float>(), v[2].get<float>()));
-                }
-                if (auto it = shapeDesc.find("rotation"); it != shapeDesc.end()) {
-                    const json& v = it.value();
-                    transform *= rotationZ(radians(v[2].get<float>()));
-                    transform *= rotationY(radians(v[1].get<float>()));
-                    transform *= rotationX(radians(v[0].get<float>()));
-                }
-                if (auto it = shapeDesc.find("scale"); it != shapeDesc.end()) {
-                    const json& v = it.value();
-                    if (v.is_array()) {
-                        transform *= scaling(Vec3(v[0].get<float>(), v[1].get<float>(), v[2].get<float>()));
-                    }
-                    else {
-                        transform *= scaling(Vec3(v.get<float>()));
-                    }
-                }
+            if (auto it = shapeDesc.find("rotation"); it != shapeDesc.end()) {
+                const json& v = it.value();
+                Mat4 rotation(1.0f);
+                rotation *= rotationZ(radians(v[2].get<float>()));
+                rotation *= rotationY(radians(v[1].get<float>()));
+                rotation *= rotationX(radians(v[0].get<float>()));
+                transform *= rotation;
+                normalTransform *= transpose(rotation);
             }
+            if (auto it = shapeDesc.find("scale"); it != shapeDesc.end()) {
+                const json& v = it.value();
+                Vec3 scale(1.0f);
+                if (v.is_array()) {
+                    scale = Vec3(v[0].get<float>(), v[1].get<float>(), v[2].get<float>());
+                }
+                else {
+                    scale = Vec3(v.get<float>());
+                }
+                transform *= scaling(scale);
+                normalTransform *= scaling(Vec3(1.0f) / scale);
+            }
+            normalTransform = transpose(normalTransform);
 
             if (shapeDesc["type"] == "sphere") {
                 const json& centerObj = shapeDesc["center"];
@@ -247,14 +247,14 @@ void SceneFileParser::parseShapes(const json& node, const std::vector<Material>&
                 triangles.emplace_back(vertices[0], vertices[1], vertices[2], material);
             }
             else if (shapeDesc["type"] == "triangleMesh") {
-                parseTriangleMesh(shapeDesc, material, transform, triangles);
+                parseTriangleMesh(shapeDesc, material, transform, normalTransform, triangles);
             }
         }
     }
 }
 
 void SceneFileParser::parseTriangleMesh(const nlohmann::json& node, const Material& material,
-        const Mat4& transform, std::vector<Triangle>& triangles) {
+        const Mat4& transform, const Mat4& normalTransform, std::vector<Triangle>& triangles) {
     bool hasVertices = node.contains("vertices");
     bool hasIndices = node.contains("indices");
 
@@ -366,10 +366,9 @@ void SceneFileParser::parseTriangleMesh(const nlohmann::json& node, const Materi
                             attrib.normals[i2.normal_index * 3 + 1],
                             attrib.normals[i2.normal_index * 3 + 2]);
 
-                        // TODO: Transform with inverse transpose instead
-                        //n0 = normalize(transformVector3x4(transform, n0));
-                        //n1 = normalize(transformVector3x4(transform, n1));
-                        //n2 = normalize(transformVector3x4(transform, n2));
+                        n0 = normalize(transformVector3x4(normalTransform, n0));
+                        n1 = normalize(transformVector3x4(normalTransform, n1));
+                        n2 = normalize(transformVector3x4(normalTransform, n2));
 
                         triangles.emplace_back(v0, v1, v2, n0, n1, n2, material);
                     }
