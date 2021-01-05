@@ -37,6 +37,7 @@ This is a CPU-only, unidirectional path tracer. Most of the shading code is unop
 - [Sampling the GGX Distribution of Visible Normals (2018), Eric Heitz](http://jcgt.org/published/0007/04/01/)
 
 ## Library licenses
-- std_image_write.h : v1.15 - public domain image writer - [Github link](https://github.com/nothings/stb/blob/master/stb_image_write.h)
-- catch.hpp : v2.13.3 - BSL-1.0 License - [Github link](https://github.com/catchorg/Catch2)
-- json.hpp : v3.9.1 - MIT License - [Github link](https://github.com/nlohmann/json)
+- std_image_write.h : v1.15 - public domain image writer - [GitHub link](https://github.com/nothings/stb/blob/master/stb_image_write.h)
+- catch.hpp : v2.13.3 - BSL-1.0 License - [GitHub link](https://github.com/catchorg/Catch2)
+- json.hpp : v3.9.1 - MIT License - [GitHub link](https://github.com/nlohmann/json)
+- tiny_obj_loader.h : v1.0.6 - MIT License - [GitHub link](https://github.com/tinyobjloader/tinyobjloader/)
