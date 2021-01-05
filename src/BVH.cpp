@@ -46,7 +46,8 @@ BVH::BVH(const std::vector<const Shape*>& shapes, uint32_t maxShapesPerLeaf)
 }
 
 RayHit BVH::intersect(const Ray& ray) const {
-    uint32_t traversalStack[128]; // Should be enough for moderately balanced trees
+    constexpr uint32_t stackSize = 128; // Should be enough for moderately balanced trees
+    uint32_t traversalStack[stackSize];
     uint32_t stackOffset = 0;
     uint32_t currentNodeIndex = rootNodeIndex_;
 
@@ -58,15 +59,18 @@ RayHit BVH::intersect(const Ray& ray) const {
                 break;
             }
             currentNodeIndex = traversalStack[--stackOffset];
+            assert(stackOffset < stackSize);
             continue;
         }
 
         if (!node.isLeaf()) {
             if (ray.sign[node.splitAxis]) {
+                assert(stackOffset < stackSize);
                 traversalStack[stackOffset++] = currentNodeIndex + 1; // First child is always the next index
                 currentNodeIndex = node.secondChildOffset;
             }
             else {
+                assert(stackOffset < stackSize);
                 traversalStack[stackOffset++] = node.secondChildOffset;
                 currentNodeIndex += 1; // First child is always the next index
             }
@@ -85,13 +89,15 @@ RayHit BVH::intersect(const Ray& ray) const {
             break;
         }
         currentNodeIndex = traversalStack[--stackOffset];
+        assert(stackOffset < stackSize);
     }
 
     return closestHit;
 }
 
 void BVH::traverse(const TraversalCallback& callback) const {
-    uint32_t traversalStack[128]; // Should be enough for moderately balanced trees
+    constexpr uint32_t stackSize = 128; // Should be enough for moderately balanced trees
+    uint32_t traversalStack[stackSize];
     uint32_t stackOffset = 0;
     uint32_t currentNodeIndex = rootNodeIndex_;
 
@@ -102,6 +108,7 @@ void BVH::traverse(const TraversalCallback& callback) const {
         }
 
         if (!node.isLeaf()) {
+            assert(stackOffset < stackSize);
             traversalStack[stackOffset++] = node.secondChildOffset;
             currentNodeIndex += 1; // First child is always the next index
             continue;
@@ -111,6 +118,7 @@ void BVH::traverse(const TraversalCallback& callback) const {
             break;
         }
         currentNodeIndex = traversalStack[--stackOffset];
+        assert(stackOffset < stackSize);
     }
 }
 
