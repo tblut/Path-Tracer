@@ -44,17 +44,17 @@ add_library(stb_image_write INTERFACE)
 target_include_directories(stb_image_write INTERFACE ${CMAKE_SOURCE_DIR}/extern/stb/include)
 target_link_libraries(PathTracerLib PRIVATE stb_image_write)
 
-add_executable(PathTracer src/main.cpp)
-target_link_libraries(PathTracer PRIVATE PathTracerLib)
-enable_ipo(PathTracer)
-
 add_library(json INTERFACE)
 target_include_directories(json INTERFACE ${CMAKE_SOURCE_DIR}/extern/json/include)
-target_link_libraries(PathTracer PRIVATE json)
+target_link_libraries(PathTracerLib PUBLIC json)
 
 add_library(tinyobjloader INTERFACE)
 target_include_directories(tinyobjloader INTERFACE ${CMAKE_SOURCE_DIR}/extern/tinyobjloader/include)
-target_link_libraries(PathTracer PRIVATE tinyobjloader)
+target_link_libraries(PathTracerLib PRIVATE tinyobjloader)
+
+add_executable(PathTracer src/main.cpp)
+target_link_libraries(PathTracer PRIVATE PathTracerLib)
+enable_ipo(PathTracer)
 
 # Unit tests
 enable_testing()
