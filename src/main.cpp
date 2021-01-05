@@ -257,25 +257,47 @@ void parseTriangleMesh(const json& root, const pt::Material& material,
                     tinyobj::index_t i1 = shapes[shapeIndex].mesh.indices[indexOffset + vertexIndex + 1];
                     tinyobj::index_t i2 = shapes[shapeIndex].mesh.indices[indexOffset + vertexIndex + 2];
 
-                    // TODO: Add normals to triangles
-                    pt::Vec3 p0 = pt::Vec3(
+                    pt::Vec3 v0 = pt::Vec3(
                         attrib.vertices[i0.vertex_index * 3 + 0],
                         attrib.vertices[i0.vertex_index * 3 + 1],
                         attrib.vertices[i0.vertex_index * 3 + 2]);
-                    pt::Vec3 p1 = pt::Vec3(
+                    pt::Vec3 v1 = pt::Vec3(
                         attrib.vertices[i1.vertex_index * 3 + 0],
                         attrib.vertices[i1.vertex_index * 3 + 1],
                         attrib.vertices[i1.vertex_index * 3 + 2]);
-                    pt::Vec3 p2 = pt::Vec3(
+                    pt::Vec3 v2 = pt::Vec3(
                         attrib.vertices[i2.vertex_index * 3 + 0],
                         attrib.vertices[i2.vertex_index * 3 + 1],
                         attrib.vertices[i2.vertex_index * 3 + 2]);
 
-                    p0 = pt::transformPoint3x4(transform, p0);
-                    p1 = pt::transformPoint3x4(transform, p1);
-                    p2 = pt::transformPoint3x4(transform, p2);
+                    v0 = pt::transformPoint3x4(transform, v0);
+                    v1 = pt::transformPoint3x4(transform, v1);
+                    v2 = pt::transformPoint3x4(transform, v2);
 
-                    triangles.emplace_back(p0, p1, p2, material);
+                    if (!attrib.normals.empty()) {
+                        pt::Vec3 n0 = pt::Vec3(
+                            attrib.normals[i0.normal_index * 3 + 0],
+                            attrib.normals[i0.normal_index * 3 + 1],
+                            attrib.normals[i0.normal_index * 3 + 2]);
+                        pt::Vec3 n1 = pt::Vec3(
+                            attrib.normals[i1.normal_index * 3 + 0],
+                            attrib.normals[i1.normal_index * 3 + 1],
+                            attrib.normals[i1.normal_index * 3 + 2]);
+                        pt::Vec3 n2 = pt::Vec3(
+                            attrib.normals[i2.normal_index * 3 + 0],
+                            attrib.normals[i2.normal_index * 3 + 1],
+                            attrib.normals[i2.normal_index * 3 + 2]);
+
+                        // TODO: Transform with inverse transpose instead
+                        //n0 = pt::normalize(pt::transformVector3x4(transform, n0));
+                        //n1 = pt::normalize(pt::transformVector3x4(transform, n1));
+                        //n2 = pt::normalize(pt::transformVector3x4(transform, n2));
+
+                        triangles.emplace_back(v0, v1, v2, n0, n1, n2, material);
+                    }
+                    else {
+                        triangles.emplace_back(v0, v1, v2, material);
+                    }
                 }
 
                 indexOffset += numVertices;

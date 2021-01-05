@@ -45,13 +45,12 @@ BVH::BVH(const std::vector<const Shape*>& shapes, uint32_t maxShapesPerLeaf)
     rootNodeIndex_ = flattenTree(rootBuildNodeIndex, buildNodes);
 }
 
-std::pair<float, const Shape*> BVH::intersect(const Ray& ray) const {
+RayHit BVH::intersect(const Ray& ray) const {
     uint32_t traversalStack[128]; // Should be enough for moderately balanced trees
     uint32_t stackOffset = 0;
     uint32_t currentNodeIndex = rootNodeIndex_;
 
-    float tmin = -inf<float>;
-    const Shape* closestShape = nullptr;
+    RayHit closestHit = rayMiss;
     while (true) {
         const LinearNode& node = linearNodes_[currentNodeIndex];
         if (!testIntersection(ray, node.bounds)) {
@@ -76,10 +75,9 @@ std::pair<float, const Shape*> BVH::intersect(const Ray& ray) const {
 
         for (uint32_t i = 0; i < node.numShapes; i++) {
             const Shape* shape = orderedShapes_[node.firstShapeIndex + i];
-            float t = shape->intersect(ray);
-            if (t >= 0.0f && (tmin < 0.0f || t < tmin)) {
-                tmin = t;
-                closestShape = shape;
+            RayHit hit = shape->intersect(ray);
+            if (hit.t >= 0.0f && (closestHit.t < 0.0f || hit.t < closestHit.t)) {
+                closestHit = hit;
             }
         }
 
@@ -89,7 +87,7 @@ std::pair<float, const Shape*> BVH::intersect(const Ray& ray) const {
         currentNodeIndex = traversalStack[--stackOffset];
     }
 
-    return std::make_pair(tmin, closestShape);
+    return closestHit;
 }
 
 void BVH::traverse(const TraversalCallback& callback) const {

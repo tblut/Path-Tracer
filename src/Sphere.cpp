@@ -12,14 +12,14 @@ Sphere::Sphere(const Vec3& center, float radius, const Material& material)
 {
 }
 
-float Sphere::intersect(const Ray& ray) const {
+RayHit Sphere::intersect(const Ray& ray) const {
     float a = dot(ray.direction, ray.direction);
     Vec3 oc = ray.origin - center_;
     float halfB = dot(ray.direction, oc);
     float c = dot(oc, oc) - radiusSq_;
     float discriminant = halfB * halfB - a * c;
     if (discriminant < 0.0f) {
-        return -inf<float>;
+        return rayMiss;
     }
 
     float sqrtDiscr = std::sqrt(discriminant);
@@ -27,12 +27,11 @@ float Sphere::intersect(const Ray& ray) const {
     if (tmin < 0.0f) {
         tmin = (-halfB + sqrtDiscr) / a;
     }
-    return tmin;
+
+    Vec3 normal = normalize(ray.at(tmin) - center_);
+    return RayHit(tmin, normal, this);
 }
 
-Vec3 Sphere::normalAt(const Vec3& p) const {
-    return normalize(p - center_);
-}
 
 BoundingBox Sphere::getWorldBounds() const {
     Vec3 radiusVec(radius_);

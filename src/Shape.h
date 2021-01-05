@@ -2,10 +2,9 @@
 
 #include "BoundingBox.h"
 #include "Material.h"
+#include "Ray.h"
 
 namespace pt {
-
-struct Ray;
 
 class Shape {
 public:
@@ -15,8 +14,7 @@ public:
     }
     virtual ~Shape() = default;
 
-    virtual float intersect(const Ray& ray) const = 0;
-    virtual Vec3 normalAt(const Vec3& p) const = 0;
+    virtual RayHit intersect(const Ray& ray) const = 0;
     virtual BoundingBox getWorldBounds() const = 0;
 
     // Returns a uniformly sampled direction in world space from the point p to this shape

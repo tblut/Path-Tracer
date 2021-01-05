@@ -39,6 +39,10 @@ struct RayHit {
     {
     }
 
+    constexpr explicit operator bool() const {
+        return t >= 0.0f;
+    }
+
     float t;
     Vec3 normal;
     const Shape* shape;

@@ -54,63 +54,75 @@ Vec2 computeBarycentricCoords(const Vec3& p, const Vec3& p0, const Vec3& p1, con
 
 namespace pt {
 
-Triangle::Triangle(const Vec3& p0, const Vec3& p1, const Vec3& p2, const Material& material)
+Triangle::Triangle(const Vec3& v0, const Vec3& v1, const Vec3& v2, const Material& material)
     : Shape(material)
-    , p0_(p0)
-    , p1_(p1)
-    , p2_(p2)
-    , normal_(triangleNormal(p0, p1, p2))
-    , area_(triangleArea(p0, p1, p2))
+    , vertices_{ v0, v1, v2 }
+    , area_(triangleArea(v0, v1, v2))
+{
+    Vec3 normal = triangleNormal(v0, v1, v2);
+    normals_[0] = normal;
+    normals_[1] = normal;
+    normals_[2] = normal;
+}
+
+Triangle::Triangle(const Vec3& v0, const Vec3& v1, const Vec3& v2,
+        const Vec3& n0, const Vec3& n1, const Vec3& n2, const Material& material)
+    : Shape(material)
+    , vertices_{ v0, v1, v2 }
+    , normals_{ n0, n1, n2 }
+    , area_(triangleArea(v0, v1, v2))
 {
 }
 
 // See: Fast Minimum Storage Ray Triangle Intersection (1997), Möller and Trumbore
 // TODO: Use the method from Woop et al. (2013) instead to get watertight triangle intersection
-float Triangle::intersect(const Ray& ray) const {
+RayHit Triangle::intersect(const Ray& ray) const {
     constexpr float eps = 1e-6f;
 
-    Vec3 e1 = p1_ - p0_;
-    Vec3 e2 = p2_ - p0_;
+    Vec3 e1 = vertices_[1] - vertices_[0];
+    Vec3 e2 = vertices_[2] - vertices_[0];
     Vec3 p = cross(ray.direction, e2);
 
     float determinant = dot(p, e1);
     if (abs(determinant) < eps) {
-        return -inf<float>;
+        return rayMiss;
     }
     float invDeterminant = 1.0f / determinant;
 
-    Vec3 s = ray.origin - p0_;
+    Vec3 s = ray.origin - vertices_[0];
     float u = invDeterminant * dot(p, s);
     if (u < 0.0f || u > 1.0f) {
-        return -inf<float>;
+        return rayMiss;
     }
 
     Vec3 q = cross(s, e1);
     float v = invDeterminant * dot(ray.direction, q);
     if (v < 0.0f || u + v > 1.0f) {
-        return -inf<float>;
+        return rayMiss;
     }
 
     float t = invDeterminant * dot(e2, q);
-    return t;
-}
-
-Vec3 Triangle::normalAt(const Vec3& p) const {
-    return normal_;
+    Vec3 normal = normalize((1.0f - u - v) * normals_[0] + u * normals_[1] + v * normals_[2]);
+    return RayHit(t, normal, this);
 }
 
 BoundingBox Triangle::getWorldBounds() const {
-    return BoundingBox(min(p0_, min(p1_, p2_)), max(p0_, max(p1_, p2_)));
+    return BoundingBox(
+        min(vertices_[0], min(vertices_[1], vertices_[2])),
+        max(vertices_[0], max(vertices_[1], vertices_[2]))
+    );
 }
 
 Vec3 Triangle::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) const {
     Vec2 uv = sampleUniformTriangle(u1, u2);
-    Vec3 q = uv.x * p0_ + uv.y * p1_ + (1.0f - uv.x - uv.y) * p2_;
-    Vec3 w = normalize(q - p);
+    float w = (1.0f - uv.x - uv.y);
+    Vec3 q = uv.x * vertices_[0] + uv.y * vertices_[1] + w * vertices_[2];
+    Vec3 dir = normalize(q - p);
 
     if (pdf) {
         // TODO: Make one-sidedness optional
-        float cosThetaI = dot(-w, normal_);
+        Vec3 normal = normalize(uv.x * normals_[0] + uv.y * normals_[1] + w * normals_[2]);
+        float cosThetaI = dot(-dir, normal);
         if (cosThetaI <= 0.0f) {
             *pdf = 0.0f;
         }
@@ -120,23 +132,23 @@ Vec3 Triangle::sampleDirection(const Vec3& p, float u1, float u2, float* pdf) co
         }
     }
 
-    return w;
+    return dir;
 }
 
 float Triangle::pdf(const Vec3& p, const Vec3& wi) const {
+    Ray ray(p, wi);
+    RayHit hit = intersect(ray);
+    if (hit.t < 0.0f) {
+        return 0.0f;
+    }
+
     // TODO: Make one-sidedness optional
-    float cosThetaI = dot(-wi, normal_);
+    float cosThetaI = dot(-wi, hit.normal);
     if (cosThetaI <= 0.0f) {
         return 0.0f;
     }
 
-    Ray ray(p, wi);
-    float t = intersect(ray);
-    if (t < 0.0f) {
-        return 0.0f;
-    }
-
-    float distSq = lengthSq(ray.at(t) - p);
+    float distSq = lengthSq(ray.at(hit.t) - p);
     return distSq / (cosThetaI * area_);
 }
 
