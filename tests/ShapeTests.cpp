@@ -33,10 +33,25 @@ TEST_CASE("BoundingBox") {
 
     SECTION("Ray Outside Hit") {
         for (int i = 0; i < 100000; i++) {
-            pt::Vec3 rayOrigin = pt::sampleUniformSphere(rng.uniformFloat(), rng.uniformFloat()) * 4.0f;
+            pt::Vec3 rayOrigin = pt::sampleUniformSphere(rng.uniformFloat(), rng.uniformFloat()) * 1000.0f;
             pt::Vec3 rayDirection = pt::normalize(bounds.getCenter() - rayOrigin);
             REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
             REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), boundsFlat));
+        }
+    }
+
+    SECTION("Ray Outside Parallel Edge Hit") {
+        for (const pt::BoundingBox& box : { bounds, boundsFlat }) {
+            for (int i = 0; i < 100000; i++) {
+                float dir = rng.uniformFloat() < 0.5f ? -1.0f : 1.0f;
+                float up = rng.uniformFloat() < 0.5f ? 0.0f : 1.0f;
+                pt::Vec3 rayOrigin = dir < 0.0f ? box.min : box.max;
+                rayOrigin.x += rng.uniformFloat() * 1000.0f * dir;
+                rayOrigin.y -= box.getExtents().y * 2.0f * dir * up;
+                rayOrigin.z -= rng.uniformFloat() * box.getExtents().z * 2.0f * dir;
+                pt::Vec3 rayDirection(-dir, 0.0f, 0.0f);
+                REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), box));
+            }
         }
     }
 
