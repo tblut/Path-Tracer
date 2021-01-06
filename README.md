@@ -7,12 +7,20 @@ This is a CPU-only, unidirectional path tracer. Most of the shading code is unop
 - Unidirectional path tracer with importance sampling and russian roulette
 - Next event estimation (direct light sampling)
 - Multiple importance sampling for next event estimation
-- Physically-based BSDF inspired by the Disney BSDF
+- Physically-based BSDF based on the Disney BSDF
 - Area lights
 - Thin lense camera model
 - Multithreaded rendering with tiles
-- Only spheres for now
-- Unit tests for most things incl. chi-square tests for BxDF sampling, and (weak) white furnace tests for BxDFs 
+- Spheres and triangle meshes
+- Bounding volume hierarchy (BVH) with SAH
+- JSON scene description file
+- Unit tests for most things incl. chi-square tests for BxDF sampling, and (weak) white furnace tests for BxDFs
+
+## Thing I want to add in the future
+- Volume rendering
+- The full Disney BSSDRF
+- Better sampling (e.g. blue noise)
+- Directional lights (for e.g. sun light)
 
 ## Some useful resources I used
 - [Physically Based Rendering: From Theory To Implementation, Matt Pharr, Wenzel Jakob, and Greg Humphreys](http://www.pbr-book.org/)
