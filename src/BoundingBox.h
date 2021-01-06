@@ -21,29 +21,27 @@ struct BoundingBox {
         return 2.0f * (size.x * size.y + size.x * size.z + size.y * size.z);
     }
 
-    union {
-        Vec3 p[2]; // 0=min, 1=max
-        struct {
-            Vec3 min;
-            Vec3 max;
-        };
-    };
+    constexpr Vec3& operator[](unsigned int index) { return (&min)[index]; }
+    constexpr const Vec3& operator[](unsigned int index) const { return (&min)[index]; }
+
+    Vec3 min;
+    Vec3 max;
 };
 
 // See: An Efficient and Robust Ray–Box Intersection Algorithm (2005), Williams et al.
 inline bool testIntersection(const Ray& ray, const BoundingBox& box) {
-    float tmin = (box.p[ray.sign[0]].x - ray.origin.x) * ray.invDirection.x;
-    float tmax = (box.p[1 - ray.sign[0]].x - ray.origin.x) * ray.invDirection.x;
-    float tminY = (box.p[ray.sign[1]].y - ray.origin.y) * ray.invDirection.y;
-    float tmaxY = (box.p[1 - ray.sign[1]].y - ray.origin.y) * ray.invDirection.y;
+    float tmin = (box[ray.sign[0]].x - ray.origin.x) * ray.invDirection.x;
+    float tmax = (box[1 - ray.sign[0]].x - ray.origin.x) * ray.invDirection.x;
+    float tminY = (box[ray.sign[1]].y - ray.origin.y) * ray.invDirection.y;
+    float tmaxY = (box[1 - ray.sign[1]].y - ray.origin.y) * ray.invDirection.y;
     if (tmin > tmaxY || tminY > tmax) {
         return false;
     }
 
     tmin = max(tmin, tminY);
     tmax = min(tmax, tmaxY);
-    float tminZ = (box.p[ray.sign[2]].z - ray.origin.z) * ray.invDirection.z;
-    float tmaxZ = (box.p[1 - ray.sign[2]].z - ray.origin.z) * ray.invDirection.z;
+    float tminZ = (box[ray.sign[2]].z - ray.origin.z) * ray.invDirection.z;
+    float tmaxZ = (box[1 - ray.sign[2]].z - ray.origin.z) * ray.invDirection.z;
     if (tmin > tmaxZ || tminZ > tmax) {
         return false;
     }
