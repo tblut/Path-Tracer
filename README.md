@@ -1,7 +1,7 @@
 # Path-Tracer
 This is a CPU-only, unidirectional path tracer. Most of the shading code is unoptimized for the sake of clarity and debugging.
 
-![Render](render_5000spp.png)
+![Render](render_4096spp.png)
 
 ## Features
 - Unidirectional path tracer with importance sampling and russian roulette
