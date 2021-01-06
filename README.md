@@ -14,13 +14,6 @@ This is a CPU-only, unidirectional path tracer. Most of the shading code is unop
 - Only spheres for now
 - Unit tests for most things incl. chi-square tests for BxDF sampling, and (weak) white furnace tests for BxDFs 
 
-## Stuff I want to add in the future
-- Triangle meshes
-- Some acceleration structure
-- Scene file format
-- Directional lights
-- Firefly removal
-
 ## Some useful resources I used
 - [Physically Based Rendering: From Theory To Implementation, Matt Pharr, Wenzel Jakob, and Greg Humphreys](http://www.pbr-book.org/)
 - [Background: Physics and Math of Shading (2012), Naty Hoffman](https://blog.selfshadow.com/publications/s2012-shading-course/hoffman/s2012_pbs_physics_math_notes.pdf)
