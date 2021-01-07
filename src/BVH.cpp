@@ -46,6 +46,9 @@ BVH::BVH(const std::vector<const Shape*>& shapes, uint32_t maxShapesPerLeaf)
 }
 
 RayHit BVH::intersect(const Ray& ray) const {
+    Vec3 rayInvDirection = Vec3(1.0f) / ray.direction;
+    bool raySign[3] = { ray.direction.x < 0.0f, ray.direction.y < 0.0f, ray.direction.z < 0.0f };
+
     constexpr uint32_t stackSize = 128; // Should be enough for moderately balanced trees
     uint32_t traversalStack[stackSize];
     uint32_t stackOffset = 0;
@@ -54,7 +57,7 @@ RayHit BVH::intersect(const Ray& ray) const {
     RayHit closestHit = rayMiss;
     while (true) {
         const LinearNode& node = linearNodes_[currentNodeIndex];
-        if (!testIntersection(ray, node.bounds)) {
+        if (!testIntersection(ray.origin, rayInvDirection, node.bounds)) {
             if (stackOffset == 0) {
                 break;
             }
@@ -64,7 +67,7 @@ RayHit BVH::intersect(const Ray& ray) const {
         }
 
         if (!node.isLeaf()) {
-            if (ray.sign[node.splitAxis]) {
+            if (raySign[node.splitAxis]) {
                 assert(stackOffset < stackSize);
                 traversalStack[stackOffset++] = currentNodeIndex + 1; // First child is always the next index
                 currentNodeIndex = node.secondChildOffset;

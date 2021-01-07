@@ -21,33 +21,17 @@ struct BoundingBox {
         return 2.0f * (size.x * size.y + size.x * size.z + size.y * size.z);
     }
 
-    constexpr Vec3& operator[](unsigned int index) { return (&min)[index]; }
-    constexpr const Vec3& operator[](unsigned int index) const { return (&min)[index]; }
-
     Vec3 min;
     Vec3 max;
 };
 
-// See: An Efficient and Robust Ray–Box Intersection Algorithm (2005), Williams et al.
-inline bool testIntersection(const Ray& ray, const BoundingBox& box) {
-    float tmin = (box[ray.sign[0]].x - ray.origin.x) * ray.invDirection.x;
-    float tmax = (box[1 - ray.sign[0]].x - ray.origin.x) * ray.invDirection.x;
-    float tminY = (box[ray.sign[1]].y - ray.origin.y) * ray.invDirection.y;
-    float tmaxY = (box[1 - ray.sign[1]].y - ray.origin.y) * ray.invDirection.y;
-    if (tmin > tmaxY || tminY > tmax) {
-        return false;
-    }
-
-    tmin = max(tmin, tminY);
-    tmax = min(tmax, tmaxY);
-    float tminZ = (box[ray.sign[2]].z - ray.origin.z) * ray.invDirection.z;
-    float tmaxZ = (box[1 - ray.sign[2]].z - ray.origin.z) * ray.invDirection.z;
-    if (tmin > tmaxZ || tminZ > tmax) {
-        return false;
-    }
-
-    tmax = min(tmax, tmaxZ);
-    return tmax >= 0.0f;
+inline bool testIntersection(const Vec3& rayOrigin,
+        const Vec3& rayInvDirection, const BoundingBox& box) {
+    Vec3 t0 = (box.min - rayOrigin) * rayInvDirection;
+    Vec3 t1 = (box.max - rayOrigin) * rayInvDirection;
+    float tmin = maxComponent(min(t0, t1));
+    float tmax = minComponent(max(t0, t1));
+    return (tmin <= tmax) & (tmax >= 0.0f); // Slightly better ASM on MSVC with & instead of &&
 }
 
 } // namespace pt
