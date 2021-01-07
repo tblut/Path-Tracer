@@ -1,10 +1,31 @@
 #include "SceneFileParser.h"
+#include "Vector2.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
 #include <fstream>
 #include <iostream>
+
+namespace {
+
+using namespace pt;
+using json = nlohmann::json;
+
+Vec3 parseColor(const json& node) {
+    return node.is_array()
+        ? Vec3(node[0].get<float>(), node[1].get<float>(), node[2].get<float>())
+        : Vec3(node.get<float>());
+}
+
+Vector2<uint32_t> parseSize(const json& node) {
+    return node.is_array()
+        ? Vector2<uint32_t>(node[0].get<uint32_t>(), node[1].get<uint32_t>())
+        : Vector2<uint32_t>(node.get<uint32_t>());
+}
+
+} // namespace
+
 
 namespace pt {
 
@@ -27,24 +48,17 @@ SceneFileParser::SceneFileParser(const std::filesystem::path& sceneFilePath)
 }
 
 Film SceneFileParser::parseFilm() {
-    uint32_t filmWidth, filmHeight;
+    Vector2<uint32_t> filmSize;
     if (auto it = root_.find("film"); it != root_.end()) {
         for (const auto& item : it->items()) {
             const json& v = item.value();
             if (item.key() == "size") {
-                if (v.is_array()) {
-                    v[0].get_to(filmWidth);
-                    v[1].get_to(filmHeight);
-                }
-                else {
-                    v.get_to(filmWidth);
-                    filmHeight = filmWidth;
-                }
+                filmSize = parseSize(v);
             }
         }
     }
 
-    return Film(filmWidth, filmHeight);
+    return Film(filmSize.x, filmSize.y);
 }
 
 Camera SceneFileParser::parseCamera(float filmAspectRatio) {
@@ -77,6 +91,12 @@ Camera SceneFileParser::parseCamera(float filmAspectRatio) {
                 Vec3 up(v[6].get<float>(), v[7].get<float>(), v[8].get<float>());
                 viewMatrix = lookAt(pos, target, up);
             }
+            else if (item.key() == "lookTo") {
+                Vec3 pos(v[0].get<float>(), v[1].get<float>(), v[2].get<float>());
+                Vec3 dir(v[3].get<float>(), v[4].get<float>(), v[5].get<float>());
+                Vec3 up(v[6].get<float>(), v[7].get<float>(), v[8].get<float>());
+                viewMatrix = lookAt(pos, pos + dir, up);
+            }
         }
     }
 
@@ -98,26 +118,11 @@ Renderer SceneFileParser::parseRenderer() {
                 renderer.setMinRRDepth(v.get<uint32_t>());
             }
             else if (item.key() == "backgroundColor") {
-                Vec3 color;
-                if (v.is_array()) {
-                    color = Vec3(v[0].get<float>(), v[1].get<float>(), v[2].get<float>());
-                }
-                else {
-                    color = Vec3(v.get<float>());
-                }
-                renderer.setBackgroundColor(color);
+                renderer.setBackgroundColor(parseColor(v));
             }
             else if (item.key() == "tileSize") {
-                uint32_t tileWidth, tileHeight;
-                if (v.is_array()) {
-                    v[0].get_to(tileWidth);
-                    v[1].get_to(tileHeight);
-                }
-                else {
-                    v.get_to(tileWidth);
-                    tileHeight = tileWidth;
-                }
-                renderer.setTileSize(tileWidth, tileHeight);
+                Vector2<uint32_t> tileSize = parseSize(v);
+                renderer.setTileSize(tileSize.x, tileSize.y);
             }
         }
     }
@@ -153,12 +158,7 @@ void SceneFileParser::parseMaterials(const json& node, std::vector<Material>& ma
                 materialMap_[v.get<std::string>()] = materials.size();
             }
             else if (item.key() == "baseColor") {
-                if (v.is_array()) {
-                    baseColor = Vec3(v[0].get<float>(), v[1].get<float>(), v[2].get<float>());
-                }
-                else {
-                    baseColor = Vec3(v.get<float>());
-                }
+                baseColor = parseColor(v);
             }
             else if (item.key() == "roughness") {
                 v.get_to(roughness);
@@ -173,12 +173,7 @@ void SceneFileParser::parseMaterials(const json& node, std::vector<Material>& ma
                 v.get_to(transmission);
             }
             else if (item.key() == "emittance") {
-                if (v.is_array()) {
-                    emittance = Vec3(v[0].get<float>(), v[1].get<float>(), v[2].get<float>());
-                }
-                else {
-                    emittance = Vec3(v.get<float>());
-                }
+                emittance = parseColor(v);
             }
         }
 
@@ -211,13 +206,7 @@ void SceneFileParser::parseShapes(const json& node, const std::vector<Material>&
             }
             if (auto it = shapeDesc.find("scale"); it != shapeDesc.end()) {
                 const json& v = it.value();
-                Vec3 scale(1.0f);
-                if (v.is_array()) {
-                    scale = Vec3(v[0].get<float>(), v[1].get<float>(), v[2].get<float>());
-                }
-                else {
-                    scale = Vec3(v.get<float>());
-                }
+                Vec3 scale = parseColor(v);
                 transform *= scaling(scale);
                 normalTransform *= scaling(Vec3(1.0f) / scale);
             }
