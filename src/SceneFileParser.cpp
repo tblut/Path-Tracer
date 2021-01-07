@@ -73,9 +73,9 @@ Camera SceneFileParser::parseCamera(float filmAspectRatio) {
             }
             else if (item.key() == "lookAt") {
                 Vec3 pos(v[0].get<float>(), v[1].get<float>(), v[2].get<float>());
-                Vec3 dir(v[3].get<float>(), v[4].get<float>(), v[5].get<float>());
+                Vec3 target(v[3].get<float>(), v[4].get<float>(), v[5].get<float>());
                 Vec3 up(v[6].get<float>(), v[7].get<float>(), v[8].get<float>());
-                viewMatrix = lookAt(pos, dir, up);
+                viewMatrix = lookAt(pos, target, up);
             }
         }
     }
@@ -351,7 +351,7 @@ void SceneFileParser::parseTriangleMesh(const nlohmann::json& node, const Materi
                     v0 = transformPoint3x4(transform, v0);
                     v1 = transformPoint3x4(transform, v1);
                     v2 = transformPoint3x4(transform, v2);
-
+                    
                     if (!attrib.normals.empty()) {
                         Vec3 n0 = Vec3(
                             attrib.normals[i0.normal_index * 3 + 0],

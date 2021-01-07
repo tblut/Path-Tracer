@@ -54,18 +54,20 @@ Camera::Camera(float fovY, float aspect, float aperture, float focalDistance, co
 Ray Camera::generateRay(float u, float v, float u1, float u2) const {
     float pu = (2.0f * u - 1.0f) * scaleX_;
     float pv = (1.0f - 2.0f * v) * scaleY_;
-    Ray ray(Vec3(0.0f), normalize(Vec3(pu, pv, -1.0f)));
+    Vec3 rayOrigin(0.0f);
+    Vec3 rayDirection = normalize(Vec3(pu, pv, -1.0f));
 
     if (aperture_ > 0.0f) {
         Vec2 lensPoint = aperture_ * sampleCocentricDisk(u1, u2);
-        Vec3 focusPoint = ray.at(focalDistance_ / abs(ray.direction.z));
-        ray.origin = Vec3(lensPoint.x, lensPoint.y, 0.0f);
-        ray.direction = normalize(focusPoint - ray.origin);
+        float focusDistance = focalDistance_ / abs(rayDirection.z);
+        Vec3 focusPoint = rayOrigin + focusDistance * rayDirection;
+        rayOrigin = Vec3(lensPoint.x, lensPoint.y, 0.0f);
+        rayDirection = normalize(focusPoint - rayOrigin);
     }
 
-    ray.origin = transformPoint3x4(viewMatrixInv_, ray.origin);
-    ray.direction = transformVector3x4(viewMatrixInv_, ray.direction);
-    return ray;
+    rayOrigin = transformPoint3x4(viewMatrixInv_, rayOrigin);
+    rayDirection = transformVector3x4(viewMatrixInv_, rayDirection);
+    return Ray(rayOrigin, rayDirection);
 }
 
 } // namespace pt
