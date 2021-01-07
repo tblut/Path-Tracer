@@ -36,6 +36,10 @@ public:
 
 private:
     struct BuildNode {
+        constexpr bool isLeaf() const {
+            return splitAxis == std::numeric_limits<uint8_t>::max();
+        }
+
         union {
             uint32_t childIndices[2];
             struct {

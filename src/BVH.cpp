@@ -258,7 +258,7 @@ uint32_t BVH::flattenTree(uint32_t rootIndex, const std::vector<BuildNode>& buil
     LinearNode& linearNode = linearNodes_.emplace_back();
     linearNode.bounds = buildNode.bounds;
 
-    if (buildNode.splitAxis == std::numeric_limits<uint8_t>::max()) {
+    if (buildNode.isLeaf()) {
         assert(buildNode.numShapes <= std::numeric_limits<uint16_t>::max());
         linearNode.firstShapeIndex = buildNode.firstShapeIndex;
         linearNode.numShapes = static_cast<uint16_t>(buildNode.numShapes);
