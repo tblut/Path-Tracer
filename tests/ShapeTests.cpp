@@ -13,8 +13,18 @@
 
 TEST_CASE("BoundingBox") {
     pt::RandomSeries rng;
-    pt::BoundingBox bounds(pt::Vec3(-1.0f), pt::Vec3(1.0f));
-    pt::BoundingBox boundsFlat(pt::Vec3(-1.0f, 0.0f, -1.0f), pt::Vec3(1.0f, 0.0f, 1.0f));
+    pt::Vec3 extents(1.0f);
+    pt::Vec3 flatExtents(1.0f, 0.0f, 1.0f);
+    pt::BoundingBox bounds(-extents, extents);
+    pt::BoundingBox boundsFlat(-flatExtents, flatExtents);
+
+    // The triangle bounds method adds epsilon to the min and max, so
+    // emulate that here as well
+    constexpr pt::Vec3 eps(std::numeric_limits<float>::epsilon());
+    bounds.min -= eps;
+    bounds.max += eps;
+    boundsFlat.min -= eps;
+    boundsFlat.max += eps;
 
     SECTION("Center") {
         REQUIRE(bounds.getCenter() == pt::ApproxVec3(0.0f, 0.0f, 0.0f));
@@ -32,50 +42,83 @@ TEST_CASE("BoundingBox") {
     }
 
     SECTION("Ray Outside Hit") {
-        for (int i = 0; i < 100000; i++) {
-            pt::Vec3 rayOrigin = pt::sampleUniformSphere(rng.uniformFloat(), rng.uniformFloat()) * 1000.0f;
-            pt::Vec3 rayDirection = pt::normalize(bounds.getCenter() - rayOrigin);
-            REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
-            REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), boundsFlat));
+        for (const pt::BoundingBox& box : { bounds, boundsFlat }) {
+            for (int i = 0; i < 1000000; i++) {
+                pt::Vec3 rayOrigin = pt::sampleUniformSphere(rng.uniformFloat(), rng.uniformFloat());
+                rayOrigin *= 1.0f + rng.uniformFloat() * 10000.0f;
+
+                pt::Vec3 target = pt::sampleUniformSphere(rng.uniformFloat(), rng.uniformFloat());
+                target *= box.getExtents() * rng.uniformFloat();
+
+                pt::Vec3 rayDirection = pt::normalize(target - rayOrigin);
+                REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), pt::Vec3(1.0f) / rayDirection, box));
+            }
         }
     }
 
     SECTION("Ray Outside Parallel Edge Hit") {
-        for (const pt::BoundingBox& box : { bounds, boundsFlat }) {
-            for (int i = 0; i < 100000; i++) {
-                float dir = rng.uniformFloat() < 0.5f ? -1.0f : 1.0f;
-                float up = rng.uniformFloat() < 0.5f ? 0.0f : 1.0f;
-                pt::Vec3 rayOrigin = dir < 0.0f ? box.min : box.max;
-                rayOrigin.x += rng.uniformFloat() * 1000.0f * dir;
-                rayOrigin.y -= box.getExtents().y * 2.0f * dir * up;
-                rayOrigin.z -= rng.uniformFloat() * box.getExtents().z * 2.0f * dir;
-                pt::Vec3 rayDirection(-dir, 0.0f, 0.0f);
-                REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), box));
+        for (const pt::BoundingBox* box : { &bounds, &boundsFlat }) {
+            pt::Vec3 extent = (box == &bounds) ? extents : flatExtents;
+
+            for (int i = 0; i < 1000000; i++) {
+                bool flip = rng.uniformFloat() < 0.5f;
+                int axis = static_cast<int>(rng.uniformFloat() * 3.0f);
+                pt::Vec3 normal(0.0f);
+                normal[axis] = flip ? -1.0f : 1.0f;
+
+                pt::Vec3 rayDirection = -normal;
+                pt::Vec3 rayOrigin = box->getCenter();
+                rayOrigin += rng.uniformFloat() * 10000.0f * normal;
+
+                float u = rng.uniformFloat();
+                int slideAxis = (u < 0.5f) ? (axis + 1) % 3 : (axis + 2) % 3;
+                int sideAxis = (u < 0.5f) ? (axis + 2) % 3 : (axis + 1) % 3;
+                pt::Vec3 slideDir(0.0f);
+                slideDir[slideAxis] = 1.0f;
+                float slideAmount = pt::remap(rng.uniformFloat(), 0.0f, pt::oneMinusEpsilon<float>, -0.5f, 0.5f);
+                rayOrigin += extent * slideDir * slideAmount;
+                rayOrigin[sideAxis] = (rng.uniformFloat() < 0.5f) ? extent[sideAxis] : -extent[sideAxis];
+
+                REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), pt::Vec3(1.0f) / rayDirection, *box));
             }
         }
     }
 
     SECTION("Ray Inside Hit") {
-        for (int i = 0; i < 100000; i++) {
-            pt::Vec3 rayOrigin(0.0f, 0.0f, 0.5f);
-            pt::Vec3 rayDirection = pt::sampleUniformSphere(rng.uniformFloat(), rng.uniformFloat());
-            REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
-            REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), boundsFlat));
+        for (const pt::BoundingBox& box : { bounds, boundsFlat }) {
+            for (int i = 0; i < 1000000; i++) {
+                pt::Vec3 rayDirection = pt::sampleUniformSphere(rng.uniformFloat(), rng.uniformFloat());
+
+                pt::Vec3 rayOrigin = pt::sampleUniformSphere(rng.uniformFloat(), rng.uniformFloat());
+                rayOrigin *= box.getExtents() * rng.uniformFloat();
+
+                REQUIRE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), pt::Vec3(1.0f) / rayDirection, box));
+            }
         }
     }
 
-    SECTION("Ray Infront Miss") {
-        pt::Vec3 rayOrigin(0.0f, -2.0f, 2.0f);
-        pt::Vec3 rayDirection(0.0f, 0.0f, -1.0f);
-        REQUIRE_FALSE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
-        REQUIRE_FALSE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), boundsFlat));
-    }
+    SECTION("Ray Miss") {
+        for (bool front : { true, false }) {
+            for (int i = 0; i < 6; i++) {
+                int dirAxis = i / 2;
+                pt::Vec3 rayOrigin(0.0f);
+                rayOrigin[dirAxis] = (i % 2) == 0 ? 2.0f : -2.0f;
 
-    SECTION("Ray Behind Miss") {
-        pt::Vec3 rayOrigin(0.0f, 0.0f, -2.0f);
-        pt::Vec3 rayDirection(0.0f, 0.0f, -1.0f);
-        REQUIRE_FALSE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), bounds));
-        REQUIRE_FALSE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), boundsFlat));
+                pt::Vec3 rayDirection(0.0f);
+                rayDirection[dirAxis] = (i % 2) == 0 ? -1.0f : 1.0f;
+                if (!front) {
+                    rayDirection[dirAxis] *= -1.0f;
+                }
+
+                for (int k = 0; k < 4; k++) {
+                    int offsetAxis = (dirAxis + 1 + k / 2) % 3;
+                    rayOrigin[offsetAxis] = (k % 2) == 0 ? -4.0f : 4.0f;
+
+                    REQUIRE_FALSE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), pt::Vec3(1.0f) / rayDirection, bounds));
+                    REQUIRE_FALSE(pt::testIntersection(pt::Ray(rayOrigin, rayDirection), pt::Vec3(1.0f) / rayDirection, boundsFlat));
+                }
+            }
+        }
     }
 }
 
