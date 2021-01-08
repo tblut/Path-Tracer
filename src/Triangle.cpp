@@ -101,15 +101,23 @@ RayHit Triangle::intersect(const Ray& ray) const {
         return rayMiss;
     }
 
-    float t = invDeterminant * dot(e2, q);
+    float tmin = invDeterminant * dot(e2, q);
+    if (tmin < 0.0f || tmin >= ray.tmax) {
+        return rayMiss;
+    }
+
     Vec3 normal = normalize((1.0f - u - v) * normals_[0] + u * normals_[1] + v * normals_[2]);
-    return RayHit(t, normal, this);
+    return RayHit(tmin, normal, this);
 }
 
 BoundingBox Triangle::getWorldBounds() const {
+    // Increase the size by a very small epsilon so that perfectly
+    // flat dimensions are avoided which lead to false positives
+    // in the ray/box intersection method.
+    constexpr Vec3 eps(std::numeric_limits<float>::epsilon());
     return BoundingBox(
-        min(vertices_[0], min(vertices_[1], vertices_[2])),
-        max(vertices_[0], max(vertices_[1], vertices_[2]))
+        min(vertices_[0], min(vertices_[1], vertices_[2])) - eps,
+        max(vertices_[0], max(vertices_[1], vertices_[2])) + eps
     );
 }
 

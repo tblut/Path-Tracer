@@ -29,7 +29,7 @@ public:
     using TraversalCallback = std::function<bool(const LinearNode&)>;
 
     BVH(const std::vector<const Shape*>& shapes, uint32_t maxShapesPerLeaf);
-    RayHit intersect(const Ray& ray) const;
+    RayHit intersect(Ray ray) const;
 
     // Depth-first traversal (for testing purposes)
     void traverse(const TraversalCallback& callback) const;

@@ -28,6 +28,10 @@ RayHit Sphere::intersect(const Ray& ray) const {
         tmin = (-halfB + sqrtDiscr) / a;
     }
 
+    if (tmin < 0.0f || tmin >= ray.tmax) {
+        return rayMiss;
+    }
+
     Vec3 normal = normalize(ray.at(tmin) - center_);
     return RayHit(tmin, normal, this);
 }

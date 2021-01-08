@@ -45,7 +45,7 @@ BVH::BVH(const std::vector<const Shape*>& shapes, uint32_t maxShapesPerLeaf)
     rootNodeIndex_ = flattenTree(rootBuildNodeIndex, buildNodes);
 }
 
-RayHit BVH::intersect(const Ray& ray) const {
+RayHit BVH::intersect(Ray ray) const {
     Vec3 rayInvDirection = Vec3(1.0f) / ray.direction;
     bool raySign[3] = { ray.direction.x < 0.0f, ray.direction.y < 0.0f, ray.direction.z < 0.0f };
 
@@ -57,7 +57,7 @@ RayHit BVH::intersect(const Ray& ray) const {
     RayHit closestHit = rayMiss;
     while (true) {
         const LinearNode& node = linearNodes_[currentNodeIndex];
-        if (!testIntersection(ray.origin, rayInvDirection, node.bounds)) {
+        if (!testIntersection(ray, rayInvDirection, node.bounds)) {
             if (stackOffset == 0) {
                 break;
             }
@@ -85,6 +85,7 @@ RayHit BVH::intersect(const Ray& ray) const {
             RayHit hit = shape->intersect(ray);
             if (hit.t >= 0.0f && (closestHit.t < 0.0f || hit.t < closestHit.t)) {
                 closestHit = hit;
+                ray.tmax = hit.t;
             }
         }
 

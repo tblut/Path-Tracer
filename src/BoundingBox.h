@@ -25,13 +25,13 @@ struct BoundingBox {
     Vec3 max;
 };
 
-inline bool testIntersection(const Vec3& rayOrigin,
+inline bool testIntersection(const Ray& ray,
         const Vec3& rayInvDirection, const BoundingBox& box) {
-    Vec3 t0 = (box.min - rayOrigin) * rayInvDirection;
-    Vec3 t1 = (box.max - rayOrigin) * rayInvDirection;
+    Vec3 t0 = (box.min - ray.origin) * rayInvDirection;
+    Vec3 t1 = (box.max - ray.origin) * rayInvDirection;
     float tmin = maxComponent(min(t0, t1));
     float tmax = minComponent(max(t0, t1));
-    return (tmin <= tmax) & (tmax >= 0.0f); // Slightly better ASM on MSVC with & instead of &&
+    return (tmin < ray.tmax) && (tmax >= max(0.0f, tmin));
 }
 
 } // namespace pt
