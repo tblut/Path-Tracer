@@ -9,6 +9,7 @@ Sphere::Sphere(const Vec3& center, float radius, const Material& material)
     , center_(center)
     , radius_(radius)
     , radiusSq_(radius * radius)
+    , invRadius_(1.0f / radius)
 {
 }
 
@@ -32,7 +33,7 @@ RayHit Sphere::intersect(const Ray& ray) const {
         return rayMiss;
     }
 
-    Vec3 normal = normalize(ray.at(tmin) - center_);
+    Vec3 normal = (ray.at(tmin) - center_) * invRadius_;
     return RayHit(tmin, normal, this);
 }
 

@@ -22,6 +22,7 @@ private:
     Vec3 center_;
     float radius_;
     float radiusSq_;
+    float invRadius_;
 };
 
 } // namespace pt
