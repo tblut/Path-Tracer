@@ -1,5 +1,7 @@
 #include "SceneFileParser.h"
 #include "Vector2.h"
+#include "RandomSampler.h"
+#include "CMJSampler.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -103,6 +105,42 @@ Camera SceneFileParser::parseCamera(float filmAspectRatio) {
     return Camera(radians(fovY), aspect, aperture, focalDistance, viewMatrix);
 }
 
+std::unique_ptr<Sampler> SceneFileParser::parseSampler(uint32_t samplesPerPixelOverride) {
+    std::string type = "cmj";
+    uint32_t samplesPerPixel = 128;
+    
+    if (auto it = root_.find("sampler"); it != root_.end()) {
+        for (const auto& item : it->items()) {
+            const json& v = item.value();
+            if (item.key() == "type") {
+                v.get_to(type);
+            }
+            else if (item.key() == "samplesPerPixel" || item.key() == "spp") {
+                v.get_to(samplesPerPixel);
+            }
+        }
+    }
+
+    if (samplesPerPixelOverride) {
+        samplesPerPixel = samplesPerPixelOverride;
+    }
+
+    std::unique_ptr<Sampler> sampler;
+    if (type == "random") {
+        sampler = std::make_unique<RandomSampler>(samplesPerPixel);
+    }
+    else {
+        sampler = std::make_unique<CMJSampler>(samplesPerPixel);
+    }
+
+    if (sampler->getSamplesPerPixel() != samplesPerPixel) {
+        std::cout << "[INFO]: Samples per pixel rounded up to "
+            << sampler->getSamplesPerPixel() << " by stratified sampler\n";
+    }
+
+    return sampler;
+}
+
 Renderer SceneFileParser::parseRenderer() {
     Renderer renderer;
     if (auto it = root_.find("renderer"); it != root_.end()) {
@@ -110,9 +148,6 @@ Renderer SceneFileParser::parseRenderer() {
             const json& v = item.value();
             if (item.key() == "maxDepth") {
                 renderer.setMaxDepth(v.get<uint32_t>());
-            }
-            else if (item.key() == "samplesPerPixel") {
-                renderer.setSamplesPerPixel(v.get<uint32_t>());
             }
             else if (item.key() == "minRRDepth") {
                 renderer.setMinRRDepth(v.get<uint32_t>());

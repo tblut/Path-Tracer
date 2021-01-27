@@ -7,6 +7,8 @@
 #include "OrthonormalBasis.h"
 #include "BSDF.h"
 #include "ProgressBar.h"
+#include "Sampler.h"
+#include "HashUtils.h"
 
 namespace {
 
@@ -21,7 +23,7 @@ float powerHeuristic(int nf, float pdfF, int ng, float pdfG) {
 
 namespace pt {
 
-void Renderer::render(const Scene& scene, const Camera& camera, Film& film) {
+void Renderer::render(const Scene& scene, const Camera& camera, Film& film, Sampler& sampler) {
     auto filmTiles = film.getTiles(tileWidth_, tileHeight_);
     std::atomic<size_t> nextTileIndex = 0;
     uint32_t numThreads = max(1u, std::thread::hardware_concurrency());
@@ -30,7 +32,7 @@ void Renderer::render(const Scene& scene, const Camera& camera, Film& film) {
     ProgressBar progressBar(filmTiles.size(), "Rendering");
     for (uint32_t i = 0; i < numThreads; i++) {
         workerThreads_.emplace_back([&] {
-            workerThreadMain(i, scene, camera, film,
+            workerThreadMain(i, scene, camera, film, sampler,
                 filmTiles, nextTileIndex, progressBar);
         });
     }
@@ -42,11 +44,10 @@ void Renderer::render(const Scene& scene, const Camera& camera, Film& film) {
 }
 
 void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
-        const Camera& camera, Film& film, std::vector<Film::Tile>& filmTiles,
-        std::atomic<size_t>& nextTileIndex, ProgressBar& progressBar) {
-    RandomSeries rng;
-    rng.seed(RandomSeries::defaultState * (id + 1),
-        RandomSeries::defaultInc * (id - 1));
+        const Camera& camera, Film& film, Sampler& sampler,
+        std::vector<Film::Tile>& filmTiles, std::atomic<size_t>& nextTileIndex,
+        ProgressBar& progressBar) {
+    auto localSampler = sampler.clone(hash(static_cast<uint64_t>(id) + 1));
 
     while (true) {
         size_t tileIndex = nextTileIndex.fetch_add(1, std::memory_order_relaxed);
@@ -57,13 +58,20 @@ void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
 
         for (uint32_t y = tile.startY; y <= tile.endY; y++) {
             for (uint32_t x = tile.startX; x <= tile.endX; x++) {
-                for (uint32_t s = 0; s < samplesPerPixel_; s++) {
-                    float u = (x + rng.uniformFloat()) / static_cast<float>(film.getWidth() - 1);
-                    float v = (y + rng.uniformFloat()) / static_cast<float>(film.getHeight() - 1);
-                    Ray ray = camera.generateRay(u, v, rng.uniformFloat(), rng.uniformFloat());
-                    Vec3 color = radiance(scene, rng, ray);
+                localSampler->startPixel(x + y * film.getWidth());
+
+                for (uint32_t s = 0; s < localSampler->getSamplesPerPixel(); s++) {
+                    Vec2 pixelOffset = localSampler->get2D();
+                    float u = (x + pixelOffset.x) / static_cast<float>(film.getWidth() - 1);
+                    float v = (y + pixelOffset.y) / static_cast<float>(film.getHeight() - 1);
+
+                    Vec2 filmOffset = localSampler->get2D();
+                    Ray ray = camera.generateRay(u, v, filmOffset.x, filmOffset.y);
+                    Vec3 color = radiance(scene, *localSampler, ray);
                     assert(isFinite(color) && color.r >= 0.0f && color.g >= 0.0f && color.b >= 0.0f);
                     film.addSample(x, y, color);
+
+                    localSampler->startNextSample();
                 }
             }
         }
@@ -72,7 +80,7 @@ void Renderer::workerThreadMain(uint32_t id, const Scene& scene,
     }
 }
 
-Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
+Vec3 Renderer::radiance(const Scene& scene, Sampler& sampler, Ray ray) const {
     Vec3 lambda(1.0f);
     Vec3 color(0.0f);
     RayHit hit = scene.intersect(ray);
@@ -93,15 +101,21 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
         OrthonormalBasis basis(hit.normal);
         wo = basis.worldToLocal(wo);
 
+        // Request samples upfront to ensure exact same order every iteration
+        float lightIndexSample = sampler.get1D();
+        Vec2 lightSample = sampler.get2D();
+        Vec2 bsdfSample = sampler.get2D();
+        float rrSample = sampler.get1D();
+
         // Sample a single light source
-        size_t lightIndex = static_cast<size_t>(rng.uniformFloat() * scene.getNumLights());
+        size_t lightIndex = static_cast<size_t>(lightIndexSample * scene.getNumLights());
         const Shape* light = scene.getLights()[lightIndex];
         float lightProb = 1.0f / scene.getNumLights();
 
         // MIS light sampling
         float lightPdf;
         Vec3 lightDir = light->sampleDirection(intersectionPoint,
-            rng.uniformFloat(), rng.uniformFloat(), &lightPdf);
+            lightSample.x, lightSample.y, &lightPdf);
         Vec3 wi = basis.worldToLocal(lightDir);
 
         float cosThetaI = abs(cosTheta(wi));
@@ -121,7 +135,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
 
         // Sample BSDF for direct and indirect illumination
         float bsdfPdf;
-        wi = material->sampleDirection(wo, rng.uniformFloat(), rng.uniformFloat(), &bsdfPdf);
+        wi = material->sampleDirection(wo, bsdfSample.x, bsdfSample.y, &bsdfPdf);
         cosThetaI = abs(cosTheta(wi));
         if (cosThetaI <= 0.0f || bsdfPdf <= 0.0f) {
             break;
@@ -148,7 +162,7 @@ Vec3 Renderer::radiance(const Scene& scene, RandomSeries& rng, Ray ray) const {
         float rrProb = min(0.95f, max(lambda.r, max(lambda.g, lambda.b)));
         assert(rrProb > 0.0f && std::isfinite(rrProb));
         if (depth >= minRRDepth_) {
-            if (rng.uniformFloat() > rrProb) {
+            if (rrSample > rrProb) {
                 break;
             }
             lambda /= rrProb;

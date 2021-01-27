@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cmath>
 #include <limits>
+#include <cmath>
+#include <cassert>
 
 namespace pt {
 
@@ -63,5 +64,20 @@ template <typename T>
 constexpr T radians(T deg) {
     return deg * (pi<T> / static_cast<T>(180));
 }
+
+#ifdef _MSC_VER
+// Using uint32_t here anywhere causes tons of unrelated compile error?!
+inline unsigned long countLeadingZeros(unsigned long x) {
+    assert(x != 0);
+    unsigned long index = 0;
+    _BitScanReverse(&index, x);
+    return 31 - index;
+}
+#else // GCC and Clang
+inline unsigned int countLeadingZeros(unsigned int x) {
+    assert(x != 0);
+    return __builtin_clz(x);
+}
+#endif
 
 } // namespace pt

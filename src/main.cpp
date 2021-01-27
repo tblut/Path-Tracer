@@ -6,6 +6,8 @@
 #include "Sphere.h"
 #include "Triangle.h"
 #include "SceneFileParser.h"
+#include "RandomSampler.h"
+#include "CMJSampler.h"
 
 #include <chrono>
 #include <iostream>
@@ -13,20 +15,17 @@
 #include <filesystem>
 
 int loadAndRenderScene(const std::filesystem::path& scenePath,
-        const std::filesystem::path& outputPath, uint32_t samplesPerPixel) {
+        const std::filesystem::path& outputPath, uint32_t samplesPerPixelOverride) {
     pt::SceneFileParser sceneParser(scenePath);
     if (!sceneParser.isValid()) {
         return 1;
     }
 
     pt::Film film = sceneParser.parseFilm();
-    pt::Camera camera = sceneParser.parseCamera(film.getWidth() / static_cast<float>(film.getHeight()));
+    float filmAspectRatio = film.getWidth() / static_cast<float>(film.getHeight());
+    pt::Camera camera = sceneParser.parseCamera(filmAspectRatio);
+    auto sampler = sceneParser.parseSampler(samplesPerPixelOverride);
     pt::Renderer renderer = sceneParser.parseRenderer();
-
-    // Override if needed
-    if (samplesPerPixel > 0) {
-        renderer.setSamplesPerPixel(samplesPerPixel);
-    }
 
     std::vector<pt::Sphere> spheres;
     std::vector<pt::Triangle> triangles;
@@ -43,7 +42,7 @@ int loadAndRenderScene(const std::filesystem::path& scenePath,
     scene.compile();
 
     auto start = std::chrono::high_resolution_clock::now();
-    renderer.render(scene, camera, film);
+    renderer.render(scene, camera, film, *sampler);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Render completed in " << (end - start).count() * 1.0e-9 << " seconds\n";
     film.saveToFile(outputPath.generic_u8string());

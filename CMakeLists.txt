@@ -62,7 +62,7 @@ add_library(Catch2 INTERFACE)
 target_include_directories(Catch2 INTERFACE ${CMAKE_SOURCE_DIR}/extern/catch2/include)
 
 add_test_exe(math MathTests "tests/MathTests.cpp")
-add_test_exe(rng RngTests "tests/RngTests.cpp")
+add_test_exe(sampler SamplerTests "tests/SamplerTests.cpp")
 add_test_exe(bsdf BsdfTests "tests/BsdfTests.cpp")
 add_test_exe(shape ShapeTests "tests/ShapeTests.cpp")
 add_test_exe(helper HelperTests "tests/HelperTests.cpp")

@@ -7,6 +7,7 @@
 #include "Triangle.h"
 #include "Sphere.h"
 #include "Material.h"
+#include "Sampler.h"
 
 #include <json.hpp>
 
@@ -22,6 +23,7 @@ public:
 
     pt::Film parseFilm();
     pt::Camera parseCamera(float filmAspectRatio);
+    std::unique_ptr<Sampler> parseSampler(uint32_t samplesPerPixelOverride);
     pt::Renderer parseRenderer();
     void parseScene(std::vector<pt::Sphere>& spheres,
         std::vector<pt::Triangle>& triangles,

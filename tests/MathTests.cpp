@@ -201,6 +201,12 @@ TEST_CASE("radians") {
     CHECK(pt::radians(180.0f) == pt::Approx(pt::pi<float>));
 }
 
+TEST_CASE("countLeadingZeros") {
+    CHECK(pt::countLeadingZeros(1) == 31);
+    CHECK(pt::countLeadingZeros(123) == 25);
+    CHECK(pt::countLeadingZeros(0xffffffff) == 0);
+}
+
 
 TEST_CASE("Vector Constructors and Operators") {
     auto a2 = pt::Vec2(1.0f, 2.0f);
