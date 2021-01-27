@@ -50,12 +50,6 @@ TEST_CASE("CMJ Sampling") {
     std::vector<uint32_t> substrataRows2D(N, 0);
     std::vector<uint32_t> substrataCols2D(N, 0);
 
-    auto strataIndex = [](const pt::Vec2& sample, uint32_t m, uint32_t n) {
-        uint32_t strataX = static_cast<uint32_t>(sample.x * m);
-        uint32_t strataY = static_cast<uint32_t>(sample.y * n);
-        return strataX + strataY * m;
-    };
-
     pt::CMJSampler sampler(N);
     for (uint32_t pixelIndex = 0; pixelIndex < 10; pixelIndex++) {
         sampler.startPixel(pixelIndex);
